@@ -79,8 +79,6 @@ services:
   web:
     container_name: todo_web
     build: ./frontend
-    env_file:
-      - ./frontend/.env.local
     environment:
       # set proxy for docker
       REACT_APP_PROXY: http://api:8000
