@@ -1,11 +1,10 @@
-**/.DS_Store
-**/__pycache__
-**/.pytest_cache
+.DS_Store
+__pycache__/
+.pytest_cache/
 Dockerfile
 .env
 README.md
 .git
 .gitignore
-**/*.log
 requirements-dev.txt
 pytest.ini

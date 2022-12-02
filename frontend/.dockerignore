@@ -1,4 +1,4 @@
-**/.DS_Store
+.DS_Store
 Dockerfile
 .env.local
 README.md

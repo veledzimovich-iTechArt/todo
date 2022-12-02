@@ -7,8 +7,9 @@ services:
     env_file:
       - ./backend/.env
     environment:
+      POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      DATABASE_HOST: db
+      POSTGRES_DB: todo
     volumes:
       - ./postgres-data:/var/lib/postgresql/data
     ports:
