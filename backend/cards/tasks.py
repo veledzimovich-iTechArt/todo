@@ -1,13 +1,14 @@
 import logging
 
 from celery import shared_task
-from cards.models import Tag
 
-logger = logging.getLogger('Main')
+
+logger_info = logging.getLogger('celery')
+logger_warning = logging.getLogger('celery-warning')
 
 
 @shared_task
 def notify_users():
-    logger.info(f'User')
-
-    logger.info('Done')
+    logger_info.info('User')
+    logger_warning.warning('Execute')
+    logger_info.warning('Done')

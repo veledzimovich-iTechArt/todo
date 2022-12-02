@@ -219,6 +219,7 @@ CACHE_MIDDLEWARE_SECONDS = 60 * 60 * 24
 # Celery settings
 REDIS_BROKER_DB = '2'
 CELERY_BROKER_URL = f'redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_BROKER_DB}'
+# use json to prevent error with superuser
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_RESULT_BACKEND = CELERY_BROKER_URL
 CELERY_TASK_RESULT_EXPIRES = 360
@@ -252,26 +253,48 @@ LOGGING = {
     'handlers': {
         'console': {
             'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+            'filters': ['require_debug_true'],
         },
-        'logfile': {
-            'level': 'INFO',
+        'main-logfile': {
+            'level': 'WARNING',
             'class': 'logging.handlers.RotatingFileHandler',
             'filename': os.path.join(PROJECT_DIR, 'logs', 'Main.log'),
             'maxBytes': 1024 * 1024 * 15,
             'backupCount': 100,
+            'formatter': 'verbose'
+        },
+        'celery-logfile': {
+            'level': 'WARNING',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join(PROJECT_DIR, 'logs', 'celery.log'),
+            'maxBytes': 1024 * 1024 * 15,
+            'backupCount': 100,
             'formatter': 'verbose',
-            'filters': ['require_debug_true'],
         }
     },
     'root': {
         'handlers': ['console'],
-        'level': 'WARNING',
+        'level': 'INFO',
+        'propagate': True
     },
+
     'loggers': {
         'celery': {
-            'handlers': ['logfile'],
+            'handlers': ['console'],
             'level': 'INFO',
-        }
+            'propagate': True
+        },
+        'celery-warning': {
+            'handlers': ['celery-logfile'],
+            'level': 'WARNING',
+            'propagate': False
+        },
+        'main-warning': {
+            'handlers': ['main-logfile'],
+            'level': 'WARNING',
+            'propagate': False
+        },
     }
 }
 

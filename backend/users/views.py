@@ -1,3 +1,5 @@
+import logging
+
 from django.contrib.auth import login, logout
 from rest_framework import generics
 from rest_framework import permissions
@@ -11,13 +13,16 @@ from users.serilizers import (
 )
 from users.models import User
 
+logger_info = logging.getLogger('root')
+logger_warning = logging.getLogger('main-warning')
 
-# Create your views here.
 
 class LoginView(views.APIView):
     permission_classes = (permissions.AllowAny,)
 
     def post(self, request: Request, *args, **kwargs) -> Response:
+        logger_info.info(f'Login: {request.user}')
+
         serializer = LoginSerializer(
             data=self.request.data,
             context={'request': self.request}
@@ -38,6 +43,10 @@ class LogoutView(views.APIView):
     permission_classes = (permissions.AllowAny,)
 
     def get(self, request: Request, *args, **kwargs) -> Response:
+        if request.user.is_anonymous:
+            logger_warning.warning(f'Logout: {request.user}')
+        else:
+            logger_info.info(f'Logout: {request.user}')
         logout(request)
         return Response(status=status.HTTP_200_OK)
 

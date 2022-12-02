@@ -14,6 +14,7 @@ services:
       - ./postgres-data:/var/lib/postgresql/data
     ports:
       - "15432:5432"
+    # wait for db
     healthcheck:
         test: ["CMD", "pg_isready", "-U", "postgres"]
         interval: 5s
@@ -25,6 +26,7 @@ services:
     image: redis:latest
     ports:
       - "16379:6379"
+    # wait for redis
     healthcheck:
         test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
         interval: 5s

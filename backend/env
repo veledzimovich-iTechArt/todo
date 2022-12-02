@@ -1,4 +1,6 @@
-SECRET_KEY=''
+# generate your own SECRET_KEY
+# django.core.management.utils.get_random_secret_key()
+SECRET_KEY='12345'
 DEBUG=True
 # LOCAL Database
 DATABASE_NAME=todo
