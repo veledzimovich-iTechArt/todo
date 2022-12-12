@@ -6,7 +6,7 @@ from django.db import models
 
 class User(AbstractUser):
     email = models.EmailField(unique=True)
-    phone = models.CharField(max_length=15, verbose_name='Phone', null=True, blank=True)
+    phone = models.CharField(max_length=32, verbose_name='Phone', null=True, blank=True)
 
     class Meta:
         # db_table = 'auth_user'
