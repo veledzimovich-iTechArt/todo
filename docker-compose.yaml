@@ -4,8 +4,6 @@ services:
   db:
     container_name: todo_db
     image: postgres:latest
-    env_file:
-      - ./backend/.env
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
@@ -20,6 +18,22 @@ services:
         interval: 5s
         timeout: 5s
         retries: 5
+
+  jenkins:
+    container_name: todo_jenkins
+    image: jenkins/jenkins:alpine
+    build: ./jenkins
+    env_file:
+      - ./backend/.env
+    environment:
+      DEBUG: ''
+      DATABASE_HOST: db
+      REDIS_HOST: redis
+    ports:
+     - "9090:8080"
+     - "50000:50000"
+    depends_on:
+     - db
 
   redis:
     container_name: todo_redis
