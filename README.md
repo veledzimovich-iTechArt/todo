@@ -21,7 +21,7 @@ mkdir backend
 pip3 install django djangorestframework django-cors-headers celery django-redis psycopg2 python-dotenv
 pip3 freeze > backend/requirements.txt
 # dev
-pip3 install autopep8 flake8 pycodestyle pytest memory_profiler django-debug-toolbar pytest-django
+pip3 install autopep8 flake8 pycodestyle pytest memory_profiler django-debug-toolbar pytest-django factory-boy coverage
 pip3 freeze > backend/requirements-dev.txt
 cd backend/
 # Note the trailing '.' character
@@ -37,8 +37,36 @@ python manage.py startapp users
 python manage.py startapp cards
 ```
 
+## Add env file
+```bash
+touch backend/env
+```
+```env
+# generate your own SECRET_KEY
+# django.core.management.utils.get_random_secret_key()
+SECRET_KEY='12345'
+DEBUG=True
+# LOCAL Database
+DATABASE_NAME=todo
+DATABASE_USER=postgres
+DATABASE_PASSWORD=postgres
+DATABASE_HOST=127.0.0.1
+DATABASE_PORT=5432
+DATABASE_CONN_MAX_AGE=600
+
+# REDIS
+REDIS_HOST='127.0.0.1'
+```
+
 1. Main/settings.py
 ```python
+load_dotenv()
+
+SECRET_KEY = os.environ.get('SECRET_KEY')
+DEBUG = bool(os.environ.get("DEBUG"))
+# this is the host that Docker uses to run application
+ALLOWED_HOSTS = ['localhost', '0.0.0.0', 'api']
+
 AUTH_USER_MODEL = 'user.User'
 PROJECT_APPS = [
     'users',
@@ -66,11 +94,12 @@ CSRF_TRUSTED_ORIGINS = [
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'todo',
-        'USER': 'postgres',
-        'PASSWORD': '',
-        'HOST': '127.0.0.1',
-        'PORT': '5432',
+        'NAME': os.environ.get('DATABASE_NAME'),
+        'USER': os.environ.get('DATABASE_USER'),
+        'PASSWORD': os.environ.get('DATABASE_PASSWORD'),
+        'HOST': os.environ.get('DATABASE_HOST'),
+        'PORT': os.environ.get('DATABASE_PORT'),
+        'CONN_MAX_AGE': int(os.environ.get('DATABASE_CONN_MAX_AGE'))
     }
 }
 ```
@@ -106,9 +135,64 @@ python manage.py createsuperuser --email a.veledzimovich@itechart-group.com --us
 python manage.py runserver
 ```
 
-9. Add env file
+## Setup GitHub/Actions
 ```bash
-touch backend/env
+mkdir -p .github/workflows
+touch .github/workflows/django-rest.yml
+```
+```yml
+name: Django CI
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    strategy:
+      max-parallel: 4
+      matrix:
+        python-version: ['3.11.0']
+
+    services:
+      postgres:
+        image: postgres:13
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: test
+          POSTGRES_PORT: 5432
+        ports:
+          - 5432:5432
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+
+    env:
+        DATABASE_NAME: test
+        DATABASE_USER: test
+        DATABASE_PASSWORD: test
+        DATABASE_HOST: '127.0.0.1'
+        DATABASE_PORT: 5432
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v3
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install Dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r backend/requirements.txt
+        pip install pytest-django factory-boy coverage
+    - name: Run Migrations
+      run: python backend/manage.py migrate
+    - name: Run Tests
+      run: |
+        coverage run --source='.' -m pytest backend
+        coverage report
 ```
 
 ## Add owner to the Todo
@@ -270,6 +354,23 @@ edit Main.settings.py and add '/' in FE
 APPEND_SLASH = False
 ```
 
+## remove admin
+```bash
+python3 backend/manage.py shell
+```
+```python
+from django.contrib.auth.models import User
+User.objects.get(username="admin", is_superuser=True).delete()
+```
+
+## reset migration
+```bash
+# all
+python3 manage.py flush
+# app
+python manage.py migrate users zero
+```
+
 ## add pytest
 ```bash
 pip3 install pytest-django
@@ -281,11 +382,25 @@ pytest.ini
 DJANGO_SETTINGS_MODULE = Main.settings
 python_files = tests.py test_*.py *_tests.py
 ```
+? separate test-settings.py
 
-?
-coverage run --source='.' manage.py test polls
+## add coverage
+```bash
+pip3 install coverage
+coverage run --source='.' -m pytest backend
+coverage run --source='.' -m unittest discover backend
+coverage run --source='.' backend/manage.py test backend
 coverage report
 coverage html
+```
+
+## reproducible random values factory-boy
+```python
+import factory.random
+
+def setup_test_environment():
+    factory.random.reseed_random('my_awesome_project')
+```
 
 ## set database extension for case-insensitive
 1. create new template
@@ -339,6 +454,24 @@ class Migration(migrations.Migration):
     ]
 ```
 
+## check migration
+```bash
+# read sql
+python3 backend/manage.py sqlmigrate users 0002
+# check problems
+python backend/manage.py check
+```
+
+## dump fixtures
+```bash
+# all
+python3 backend/manage.py dumpdata -o backend/initial_data.json
+# exclude
+python3 backend/manage.py dumpdata --exclude cards.todo --format=json cards > backend/initial_data.json
+# specific
+python3 backend/manage.py dumpdata users.User > backend/users_data.json
+```
+
 ## load all fixtures
 1. Dump data
 ```bash
@@ -381,13 +514,22 @@ class Command(BaseCommand):
             for fixture in cards_fixtures:
                 call_command('loaddata', f'{fixture}')
 ```
+3. Main/settings.py
+```python
+PROJECT_APPS = [
+    # core app created for manage fixtures
+    'core',
+    # ...
+]
+```
 
 ## django-debug-toolbar
 1. Main/settings.py
 ```python
+DEBUG_APPS = [app for app in ["debug_toolbar"] if DEBUG]
 INSTALLED_APPS = [
     # ...
-    "debug_toolbar",
+    *DEBUG_APPS,
     # ...
 ]
 MIDDLEWARE = [
@@ -431,6 +573,8 @@ python manage.py startapp users
 3. Set owner
 cards/models.py
 ```python
+# from django.contrib.auth import get_user_model
+# same
 from Main.settings import AUTH_USER_MODEL
 class Todo(models.Model):
     owner = models.ForeignKey(
@@ -552,7 +696,7 @@ INSTALLED_APPS = [
     "django_redis",
     # ...
 ]
-REDIS_HOST = '127.0.0.1'
+REDIS_HOST = os.environ.get('REDIS_HOST')
 REDIS_PORT = '6379'
 
 REDIS_DEFAULT_CACHE_DB = '0'
@@ -661,6 +805,90 @@ celery -A Main worker -l INFO --concurrency=2 -B -s celerybeat-schedule
 
 https://docs.djangoproject.com/en/4.1/topics/logging/
 
+## setup debug & profiling
+
+### pdb
+```python
+import pdb
+pdb.set_trace()
+```
+
+### memory_profiler
+```python
+from memory_profiler import profile
+@profile
+# ...
+
+# manual run
+os.system('mprof run adlynx-backend/manage.py runserver 127.0.0.1:8000')
+```
+
+### querylog
+Main/setting.py
+```python
+LOGGING = {
+    'version': 1,
+    'filters': {
+        'require_debug_true': {
+            '()': 'django.utils.log.RequireDebugTrue',
+        }
+    },
+    'handlers': {
+        'console': {
+            'level': 'DEBUG',
+            'filters': ['require_debug_true'],
+            'class': 'logging.StreamHandler',
+        }
+    },
+    'loggers': {
+        # if default LOGGING setup add only this section
+        'django.db.backends': {
+            'level': 'DEBUG',
+            'handlers': ['console'],
+        }
+    }
+}
+```
+
+### querycount
+```bash
+pip3 install django-querycount
+```
+Main/setting.py
+```python
+MIDDLEWARE = [
+    # ...
+    'querycount.middleware.QueryCountMiddleware'
+]
+
+QUERYCOUNT = {
+    'THRESHOLDS': {
+        'MEDIUM': 50,
+        'HIGH': 200,
+        'MIN_TIME_TO_LOG': 0,
+        'MIN_QUERY_COUNT_TO_LOG': 0
+    },
+    'IGNORE_REQUEST_PATTERNS': [],
+    'IGNORE_SQL_PATTERNS': [r'silk_'],
+    'DISPLAY_DUPLICATES': None,
+    'RESPONSE_HEADER': 'X-DjangoQueryCount-Count'
+}
+```
+
+### silk
+https://github.com/jazzband/django-silk
+```bash
+pip install django-silk
+```
+
+temporary disable app
+```bash
+# remove all migrations
+python manage.py migrate silk zero
+# comment silk in INSTALLED_APPS and MIDDLEWARE in settings.py
+# comment "silk/" in urlpatterns
+```
+
 # Intial React setup
 ## Create project
 ``` bash
@@ -704,7 +932,11 @@ touch docker-compose.yaml
 ```
 ```bash
 docker-compose build
+# docker-compose build -t veledzimovich/todo .
 docker-compose up
+# daemonize
+# docker-compose up -d
+# docker-compose logs | less
 ```
 2. Check docker-compose.yaml
 3. Optimize containers

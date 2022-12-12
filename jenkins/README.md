@@ -45,8 +45,7 @@ docker exec todo_jenkins cat /var/jenkins_home/secrets/initialAdminPassword
 
 ### Manage Jenkins > Configure System > GitHub > Credentials
 - Add GITHUB_TOKEN
-
-### Test connection
+- Test connection
 
 ### NewItem > DjangoJenkinsTest > FreeStyle project
 
@@ -55,6 +54,12 @@ docker exec todo_jenkins cat /var/jenkins_home/secrets/initialAdminPassword
 
 ### Source Code Management > Git > Repository URL
 - https://github.com/veledzimovich-iTechArt/todo.git
+
+### Build Triggers
+- GitHub hook trigger for GITScm polling
+
+### Build Environment
+- Add timestamps to the Console Output
 
 ### Add Build Steps > Execute Shell
 ``` bash
@@ -76,9 +81,9 @@ rm ngrok-v3-stable-darwin-amd64.zip
 # /Users/aliaksandrveledzimovich/Library/Application Support/ngrok/ngrok.yml
 # Jenkins port 9090
 ngrok http 9090
-# get Frowarding URL
+# get Forwarding URL always new for free plan
 ```
-### Add WebHook in GitHub Settings > Webhooks > Add Webhook
+### Add/Update WebHook in GitHub Settings > Webhooks > Add Webhook
 - https://746b-82-209-202-210.eu.ngrok.io/github-webhook/
 
 # HOW TO
