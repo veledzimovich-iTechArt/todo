@@ -76,7 +76,7 @@ MIDDLEWARE = [
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware'
 ]
 
 ROOT_URLCONF = 'Main.urls'
@@ -123,7 +123,7 @@ DATABASES = {
         'PASSWORD': os.environ.get('DATABASE_PASSWORD'),
         'HOST': os.environ.get('DATABASE_HOST'),
         'PORT': os.environ.get('DATABASE_PORT'),
-        'CONN_MAX_AGE': int(os.environ.get('DATABASE_CONN_MAX_AGE'))
+        'CONN_MAX_AGE': int(os.environ.get('DATABASE_CONN_MAX_AGE', 600))
     }
 }
 
