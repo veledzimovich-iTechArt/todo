@@ -17,7 +17,7 @@ jobs:
 
     services:
       postgres:
-        image: postgres:10.8
+        image: postgres:13
         env:
           POSTGRES_USER: test
           POSTGRES_PASSWORD: test
@@ -38,6 +38,8 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r backend/requirements.txt
         pip install pytest-django factory-boy coverage
+    - name: Run Migrations
+      run: python backend/manage.py migrate
     - name: Run Tests
       env:
         DATABASE_NAME: test
