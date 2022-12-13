@@ -1,5 +1,31 @@
 # DjangoRest
 
+# Content
+
+[Run app](#run-app)
+[Initial Django setup](#initial-django-setup)
+[HOW TO](#how-to)
+    [1. add pythom interpreter VScode](#add-pythom-interpreter-vscode)
+    [2. fix 301 status](#fix-301-status)
+    [3. remove admin](#remove-admin)
+    [4. reset migration](#reset-migration)
+    [5. add pytest](#add-pytest)
+    [6. add coverage](#add-coverage)
+    [7. reproducible random values with factory-boy](#reproducible-random-values-with-factory-boy)
+    [8. set database extension for case-insensitive](#set-database-extension-for-case-insensitive)
+    [9. check migration](#check-migration)
+    [10. dump fixtures](#dump-fixtures)
+    [11. load all fixtures](#load-all-fixtures)
+    [12. add django debug toolbar](#add-django-debug-toolbar)
+    [13. create custom user model when app has data in database](#create-custom-user-model-when-app-has-data-in-database)
+    [14. setup redis](#setup-redis)
+    [15. setup celery](#setup-celery)
+    [16. setup logging](#setup-logging)
+    [17. setup debug & profiling](#setup-debug--profiling)
+    [18. setup GitHub/Actions](#setup-githubactions)
+[Intial React setup](#intial-react-setup)
+[Intial Docker setup](#intial-docker-setup)
+
 # Run app
 ```bash
 git clone https://github.com/veledzimovich-iTechArt/todo
@@ -133,66 +159,6 @@ python manage.py migrate
 python manage.py createsuperuser --email a.veledzimovich@itechart-group.com --username admin
 # password: test12345
 python manage.py runserver
-```
-
-## Setup GitHub/Actions
-```bash
-mkdir -p .github/workflows
-touch .github/workflows/django-rest.yml
-```
-```yml
-name: Django CI
-
-on:
-  push:
-    branches: [ "master" ]
-  pull_request:
-    branches: [ "master" ]
-
-jobs:
-  build:
-
-    runs-on: ubuntu-latest
-    strategy:
-      max-parallel: 4
-      matrix:
-        python-version: ['3.11.0']
-
-    services:
-      postgres:
-        image: postgres:13
-        env:
-          POSTGRES_USER: test
-          POSTGRES_PASSWORD: test
-          POSTGRES_DB: test
-          POSTGRES_PORT: 5432
-        ports:
-          - 5432:5432
-        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
-
-    env:
-        DATABASE_NAME: test
-        DATABASE_USER: test
-        DATABASE_PASSWORD: test
-        DATABASE_HOST: '127.0.0.1'
-        DATABASE_PORT: 5432
-    steps:
-    - uses: actions/checkout@v3
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v3
-      with:
-        python-version: ${{ matrix.python-version }}
-    - name: Install Dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r backend/requirements.txt
-        pip install pytest-django factory-boy coverage
-    - name: Run Migrations
-      run: python backend/manage.py migrate
-    - name: Run Tests
-      run: |
-        coverage run --source='.' -m pytest backend
-        coverage report
 ```
 
 ## Add owner to the Todo
@@ -382,7 +348,6 @@ pytest.ini
 DJANGO_SETTINGS_MODULE = Main.settings
 python_files = tests.py test_*.py *_tests.py
 ```
-? separate test-settings.py
 
 ## add coverage
 ```bash
@@ -394,7 +359,7 @@ coverage report
 coverage html
 ```
 
-## reproducible random values factory-boy
+## reproducible random values with factory-boy
 ```python
 import factory.random
 
@@ -479,7 +444,6 @@ python manage.py dumpdata users.User > users/fixtures/users.json
 python manage.py dumpdata cards.Todo > cards/fixtures/todos.json
 python manage.py dumpdata cards.Tag > cards/fixtures/tags.json
 ```
-
 2. Create command
 ```bash
 mkdir -p backend/core/mangement/commands
@@ -523,7 +487,7 @@ PROJECT_APPS = [
 ]
 ```
 
-## django-debug-toolbar
+## add django debug toolbar
 1. Main/settings.py
 ```python
 DEBUG_APPS = [app for app in ["debug_toolbar"] if DEBUG]
@@ -557,40 +521,42 @@ urlpatterns = [
 
 ## create custom user model when app has data in database
 1. Edit Main.settings.py
+```python
 AUTH_USER_MODEL = 'auth.User'
-
+```
 2. Reset migrations
+```bash
 python manage.py migrate auth zero
 python manage.py migrate admin zero
 python manage.py migrate contenttypes zero
 python manage.py migrate sessions zero
-
-manually remove DB tables for auth admin contenttypes sessions if they are exist
-
+# manually remove DB tables for auth admin contenttypes sessions if they are exist
+```
 3. Create user app
+```bash
 python manage.py startapp users
-
-3. Set owner
-cards/models.py
+```
+3. Set owner in cards/models.py
 ```python
 # from django.contrib.auth import get_user_model
 # same
 from Main.settings import AUTH_USER_MODEL
+
 class Todo(models.Model):
+    # set owner
     owner = models.ForeignKey(
         AUTH_USER_MODEL, related_name='todos', on_delete=models.CASCADE
     )
 ```
-
 4. Initial empty migration
 ```bash
 python manage.py makemigrations --empty users
 python manage.py migrate
 ```
-
 5. Create user model
+```bash
 rm users/migrations/0001_initial.py
-
+```
 ```python
 from django.contrib.auth.models import AbstractUser
 
@@ -600,31 +566,33 @@ class User(AbstractUser):
 ```
 
 6. Edit Main.settings.py
+```python
 AUTH_USER_MODEL = 'users.User'
-
+```
 ```bash
 python manage.py makemigrations
 ```
-edit migration and set default value for Card owner = 1
 ```python
-field=models.ForeignKey(default=1, on_delete=django.db.models.deletion.CASCADE,
-                        related_name='todos', to=settings.AUTH_USER_MODEL),
+# edit migration and set default value for Card owner = 1
+field=models.ForeignKey(
+    default=1,
+    on_delete=django.db.models.deletion.CASCADE,
+    related_name='todos',
+    to=settings.AUTH_USER_MODEL
+),
 ```
-
 7. Set admin
 ```bash
 python manage.py createsuperuser --email a.veledzimovich@itechart-group.com --username admin
 # password: test12345
+# check that auth_user id = 1
 ```
-check that auth_user id = 1
-
 8. Migrate
-
 ```bash
 python manage.py migrate
 ```
-
 9. Make some changes
+
 cards/models.py
 ```python
 from users.models import User
@@ -652,7 +620,6 @@ class User(AbstractUser):
 ```bash
 python manage.py migrate
 ```
-
 10. Setup django admin
 
 users/admin.py
@@ -671,7 +638,6 @@ class CustomUserAdmin(UserAdmin):
 
 admin.site.register(User, CustomUserAdmin)
 ```
-
 11. Change table name to users.User
 I generally wouldn't recommend renaming anything, because your database structure will become inconsistent. Some of the tables will have the users_ prefix, while some of them will have the auth_ prefix. But on the other hand, you could argue that the User model is now a part of the users app, so it shouldn't have the auth_ prefix.
 
@@ -756,7 +722,6 @@ CELERY_TASK_SERIALIZER = 'json'
 CELERY_ENABLE_UTC = True
 CELERY_BEAT_SCHEDULE = {}
 ```
-
 2. Main/__init__.py
 ```python
 # This will make sure the app is always imported when
@@ -765,7 +730,6 @@ from .celery import app as celery_app
 
 __all__ = ('celery_app',)
 ```
-
 3. Main/tasks.py
 ```python
 import os
@@ -790,19 +754,17 @@ app.autodiscover_tasks()
 def debug_task(self):
     print(f'Request: {self.request!r}')
 ```
-
 4. run celery
-macos
 ```bash
+# macos
 celery  -A Main worker --loglevel=INFO --concurrency=2 -B -s celerybeat-schedule
 ```
-linux
 ```bash
+# linux
 celery -A Main worker -l INFO --concurrency=2 -B -s celerybeat-schedule
 ```
 
 ## setup logging
-
 https://docs.djangoproject.com/en/4.1/topics/logging/
 
 ## setup debug & profiling
@@ -889,6 +851,66 @@ python manage.py migrate silk zero
 # comment "silk/" in urlpatterns
 ```
 
+## setup GitHub/Actions
+```bash
+mkdir -p .github/workflows
+touch .github/workflows/django-rest.yml
+```
+```yml
+name: Django CI
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    strategy:
+      max-parallel: 4
+      matrix:
+        python-version: ['3.11.0']
+
+    services:
+      postgres:
+        image: postgres:13
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: test
+          POSTGRES_PORT: 5432
+        ports:
+          - 5432:5432
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+
+    env:
+        DATABASE_NAME: test
+        DATABASE_USER: test
+        DATABASE_PASSWORD: test
+        DATABASE_HOST: '127.0.0.1'
+        DATABASE_PORT: 5432
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v3
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install Dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r backend/requirements.txt
+        pip install pytest-django factory-boy coverage
+    - name: Run Migrations
+      run: python backend/manage.py migrate
+    - name: Run Tests
+      run: |
+        coverage run --source='.' -m pytest backend
+        coverage report
+```
+
 # Intial React setup
 ## Create project
 ``` bash
@@ -914,15 +936,16 @@ src/App.js
 // with proxy, you can provide relative paths
 axios.get("/api/todos/")
 ```
-3. use dynamic proxy
+src/setupProxy.js
 ```bash
+# use dynamic proxy
 npm install http-proxy-middleware
 touch src/setupProxy.js
 echo "REACT_APP_PROXY='http://localhost:8000'" > frontend/.env.local
 ```
 
 # Intial Docker setup
-1. Create files
+## Create files
 ```bash
 touch backend/Dockerfile
 touch backend/.dockerignore
@@ -938,6 +961,6 @@ docker-compose up
 # docker-compose up -d
 # docker-compose logs | less
 ```
-2. Check docker-compose.yaml
-3. Optimize containers
+## Check docker-compose.yaml
+## Optimize containers
 https://medium.com/nerd-for-tech/bigger-dockerignore-smaller-docker-images-49fa22e51c7
