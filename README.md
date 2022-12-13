@@ -429,19 +429,19 @@ python backend/manage.py check
 ## dump fixtures
 ```bash
 # all
-python3 backend/manage.py dumpdata -o backend/initial_data.json
+python3 backend/manage.py dumpdata -o backend/Main/initial_data.json
 # exclude
-python3 backend/manage.py dumpdata --exclude cards.todo --format=json cards > backend/initial_data.json
+python3 backend/manage.py dumpdata --exclude cards.todo --format=json cards > backend/Main/initial_data.json
 # specific
-python3 backend/manage.py dumpdata users.User > backend/users_data.json
+python3 backend/manage.py dumpdata users.User > backend/users/fixtures/users_data.json
 ```
 
 ## load all fixtures
 1. Dump data
 ```bash
-python manage.py dumpdata users.User > users/fixtures/users.json
-python manage.py dumpdata cards.Todo > cards/fixtures/todos.json
-python manage.py dumpdata cards.Tag > cards/fixtures/tags.json
+python manage.py dumpdata users.User > backend/users/fixtures/users.json
+python manage.py dumpdata cards.Todo > backend/cards/fixtures/todos.json
+python manage.py dumpdata cards.Tag > backend/cards/fixtures/tags.json
 ```
 2. Create command
 ```bash
