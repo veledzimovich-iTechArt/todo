@@ -3,27 +3,31 @@
 # Content
 
 [Run app](#run-app)
+
 [Initial Django setup](#initial-django-setup)
+
 [HOW TO](#how-to)
-    [1. add pythom interpreter VScode](#add-pythom-interpreter-vscode)
-    [2. fix 301 status](#fix-301-status)
-    [3. remove admin](#remove-admin)
-    [4. reset migration](#reset-migration)
-    [5. add pytest](#add-pytest)
-    [6. add coverage](#add-coverage)
-    [7. reproducible random values with factory-boy](#reproducible-random-values-with-factory-boy)
-    [8. set database extension for case-insensitive](#set-database-extension-for-case-insensitive)
-    [9. check migration](#check-migration)
-    [10. dump fixtures](#dump-fixtures)
-    [11. load all fixtures](#load-all-fixtures)
-    [12. add django debug toolbar](#add-django-debug-toolbar)
-    [13. create custom user model when app has data in database](#create-custom-user-model-when-app-has-data-in-database)
-    [14. setup redis](#setup-redis)
-    [15. setup celery](#setup-celery)
-    [16. setup logging](#setup-logging)
-    [17. setup debug & profiling](#setup-debug--profiling)
-    [18. setup GitHub/Actions](#setup-githubactions)
+- [add pythom interpreter VScode](#add-pythom-interpreter-vscode)
+- [fix 301 status](#fix-301-status)
+- [remove admin](#remove-admin)
+- [reset migration](#reset-migration)
+- [add pytest](#add-pytest)
+- [add coverage](#add-coverage)
+- [reproducible random values with factory-boy](#reproducible-random-values-with-factory-boy)
+- [set database extension for case-insensitive](#set-database-extension-for-case-insensitive)
+- [check migration](#check-migration)
+- [dump fixtures](#dump-fixtures)
+- [load all fixtures](#load-all-fixtures)
+- [add django debug toolbar](#add-django-debug-toolbar)
+- [create custom user model when app has data in database](#create-custom-user-model-when-app-has-data-in-database)
+- [setup redis](#setup-redis)
+- [setup celery](#setup-celery)
+- [setup logging](#setup-logging)
+- [setup debug & profiling](#setup-debug--profiling)
+- [setup GitHub/Actions](#setup-githubactions)
+
 [Intial React setup](#intial-react-setup)
+
 [Intial Docker setup](#intial-docker-setup)
 
 # Run app
@@ -207,10 +211,7 @@ class IsOwnerOrReadOnly(permissions.BasePermission):
 ```
 
 ## Add user auth
-### Sesssion based
-
-https://kylebebak.github.io/post/django-rest-framework-auth-csrf
-
+### [Sesssion based](https://kylebebak.github.io/post/django-rest-framework-auth-csrf)
 1. Main.settings.py
 ```python
 REST_FRAMEWORK = {
@@ -222,7 +223,6 @@ REST_FRAMEWORK = {
     ],
 }
 ```
-
 2. users/serilizers.py
 ```python
 from django.contrib.auth import password_validation
@@ -240,7 +240,6 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         return value
     # ...
 ```
-
 3. users/view.py
 ```python
 class LoginView(views.APIView):
@@ -250,21 +249,17 @@ class LogoutView(views.APIView):
 class UserRegisterView(generics.CreateAPIView):
     # ...
 ```
-
 4. users/urls.py
 ```python
 re_path(r'^login/', LoginView.as_view(), name='login'),
 re_path(r'^logout/', LogoutView.as_view(), name='logout'),
 re_path(r'^register/', UserRegisterView.as_view(), name='register')
 ```
-Add in POSTMAN X-CSRFToken
-
-5. check Main.settings.py
+5. Main.settings.py
 ```python
 CSRF_COOKIE_HTTPONLY = False
 SESSION_COOKIE_HTTPONLY = True
 ```
-
 6. src/utils/cookieUtil.js
 ```js
 export function getCookies(document) {
@@ -289,7 +284,6 @@ export function removeCookie(document, key) {
     document.cookie = `${key}=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;`;
 };
 ```
-
 7. src/App.js
 ```js
   refreshPage = () => {
@@ -308,6 +302,7 @@ export function removeCookie(document, key) {
       .catch((err) => this.handleErrors(err, this.signInToggle));
   };
 ```
+8. Use X-CSRFToken in Postman's requests
 
 # HOW TO
 
@@ -369,10 +364,11 @@ def setup_test_environment():
 
 ## set database extension for case-insensitive
 1. create new template
+```bash
 psql
 \c template1
 CREATE EXTENSION citext;
-
+```
 2. cards/models.py
 ```python
 from django.contrib.postgres.fields import CICharField, CITextField, CIEmailField
@@ -520,7 +516,7 @@ urlpatterns = [
 ```
 
 ## create custom user model when app has data in database
-1. Edit Main.settings.py
+1. Main.settings.py
 ```python
 AUTH_USER_MODEL = 'auth.User'
 ```
@@ -536,7 +532,7 @@ python manage.py migrate sessions zero
 ```bash
 python manage.py startapp users
 ```
-3. Set owner in cards/models.py
+3. cards/models.py
 ```python
 # from django.contrib.auth import get_user_model
 # same
@@ -565,7 +561,7 @@ class User(AbstractUser):
         db_table = 'auth_user'
 ```
 
-6. Edit Main.settings.py
+6. Main.settings.py
 ```python
 AUTH_USER_MODEL = 'users.User'
 ```
@@ -639,10 +635,8 @@ class CustomUserAdmin(UserAdmin):
 admin.site.register(User, CustomUserAdmin)
 ```
 11. Change table name to users.User
-I generally wouldn't recommend renaming anything, because your database structure will become inconsistent. Some of the tables will have the users_ prefix, while some of them will have the auth_ prefix. But on the other hand, you could argue that the User model is now a part of the users app, so it shouldn't have the auth_ prefix.
-
-comment  db_table = 'auth_user'
 ```python
+# I generally wouldn't recommend renaming anything, because your database structure will become inconsistent. Some of the tables will have the users_ prefix, while some of them will have the auth_ prefix. But on the other hand, you could argue that the User model is now a part of the users app, so it shouldn't have the auth_ prefix.
 class User(AbstractUser):
     email = models.EmailField(unique=True)
     phone = models.CharField(max_length=15, verbose_name='Phone', null=True, blank=True)
@@ -764,8 +758,7 @@ celery  -A Main worker --loglevel=INFO --concurrency=2 -B -s celerybeat-schedule
 celery -A Main worker -l INFO --concurrency=2 -B -s celerybeat-schedule
 ```
 
-## setup logging
-https://docs.djangoproject.com/en/4.1/topics/logging/
+## [setup logging](https://docs.djangoproject.com/en/4.1/topics/logging/)
 
 ## setup debug & profiling
 
@@ -837,8 +830,8 @@ QUERYCOUNT = {
 }
 ```
 
-### silk
-https://github.com/jazzband/django-silk
+### [silk](https://github.com/jazzband/django-silk)
+
 ```bash
 pip install django-silk
 ```
@@ -962,5 +955,5 @@ docker-compose up
 # docker-compose logs | less
 ```
 ## Check docker-compose.yaml
-## Optimize containers
-https://medium.com/nerd-for-tech/bigger-dockerignore-smaller-docker-images-49fa22e51c7
+## [Optimize containers](https://medium.com/nerd-for-tech/bigger-dockerignore-smaller-docker-images-49fa22e51c7)
+
