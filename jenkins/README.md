@@ -3,19 +3,41 @@
 ## Setup
 ```bash
 mkdir jenkins
-touch Dockerfile
+touch jenkins/Dockerfile
+touch jenkins/docker-compose.yaml
+touch plugins.txt
+touch .dockerignore
 ```
-### set jenkins in docker-compose.yaml
+### update jenkins/docker-compose.yaml
 ```yaml
-# ...
-jenkins:
-    container_name: todo_jenkins
+version: "3"
+
+services:
+  db:
+    container_name: jenkins_db
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: test
+      POSTGRES_PASSWORD: test
+      POSTGRES_DB: test
+    ports:
+      - "15432:5432"
+    # wait for db
+    healthcheck:
+        test: ["CMD", "pg_isready", "-U", "test"]
+        interval: 5s
+        timeout: 5s
+        retries: 5
+
+  jenkins:
+    container_name: jenkins
     image: jenkins/jenkins:alpine
-    build: ./jenkins
-    env_file:
-      - ./backend/.env
+    build: .
     environment:
       DEBUG: ''
+      DATABASE_NAME: test
+      DATABASE_USER: test
+      DATABASE_PASSWORD: test
       DATABASE_HOST: db
       REDIS_HOST: redis
     ports:
@@ -23,7 +45,6 @@ jenkins:
      - "50000:50000"
     depends_on:
      - db
-# ...
 ```
 ### build without plugins
 ```Dockerfile
@@ -33,8 +54,7 @@ jenkins:
 ### get password
 ```bash
 # http://localhost:9090
-docker exec todo_jenkins cat /var/jenkins_home/secrets/initialAdminPassword
-# 0467b776ea994a92ac704ec5bc0510cb
+docker exec jenkins cat /var/jenkins_home/secrets/initialAdminPassword
 ```
 ### set default plugins (takes a lot of time) check save plugins in plugins.txt
 
@@ -71,6 +91,9 @@ pip install pytest-django factory-boy coverage
 coverage run --source='.' -m pytest backend
 coverage report
 ```
+
+### Build Now
+
 ### Run GitHub webhook locally
 ```bash
 # A.Veledzimovich@itechart-group.com GitHub
@@ -84,7 +107,7 @@ ngrok http 9090
 # get Forwarding URL always new for free plan
 ```
 ### Add/Update WebHook in GitHub Settings > Webhooks > Add Webhook
-- https://746b-82-209-202-210.eu.ngrok.io/github-webhook/
+- https://a9c4-82-209-202-210.eu.ngrok.io/github-webhook/
 
 # HOW TO
 ## save plugins in plugins.txt
@@ -95,5 +118,3 @@ curl -u admin:$PASS -sSL "$JENKINS_URL/pluginManager/api/xml?depth=1&xpath=/*/*/
 ```
 ## setup public server
 https://www.whizlabs.com/blog/integrate-jenkins-with-github/
-
-
