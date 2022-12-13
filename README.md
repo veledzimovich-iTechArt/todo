@@ -30,6 +30,7 @@
 
 [Intial Docker setup](#intial-docker-setup)
 
+
 # Run app
 ```bash
 git clone https://github.com/veledzimovich-iTechArt/todo
@@ -38,6 +39,7 @@ mv backend/env backend/.env
 docker compose build
 docker compose up
 ```
+
 
 # Initial Django setup
 ## Create project
@@ -303,6 +305,7 @@ export function removeCookie(document, key) {
   };
 ```
 8. Use X-CSRFToken in Postman's requests
+
 
 # HOW TO
 
@@ -917,6 +920,7 @@ jobs:
         coverage report
 ```
 
+
 # Intial React setup
 ## Create project
 ``` bash
@@ -949,6 +953,7 @@ npm install http-proxy-middleware
 touch src/setupProxy.js
 echo "REACT_APP_PROXY='http://localhost:8000'" > frontend/.env.local
 ```
+
 
 # Intial Docker setup
 ## Create files

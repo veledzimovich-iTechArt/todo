@@ -1,14 +1,26 @@
 # jenkins
 
-## Setup
+# Content
+
+[Setup](#setup)
+
+[Configuration](#configuration)
+
+[HOW TO](#how-to)
+- [save plugins in plugins.txt](#save-plugins-in-pluginstxt)
+- [run GitHub webhook locally](#run-github-webhook-locally)
+- [setup public server](#setup-public-server)
+
+
+# Setup
 ```bash
 mkdir jenkins
 touch jenkins/Dockerfile
 touch jenkins/docker-compose.yaml
-touch plugins.txt
+touch jenkins/plugins.txt
 touch .dockerignore
 ```
-### update jenkins/docker-compose.yaml
+## update jenkins/docker-compose.yaml
 ```yaml
 version: "3"
 
@@ -46,42 +58,44 @@ services:
     depends_on:
      - db
 ```
-### build without plugins
+## build without plugins
 ```Dockerfile
+# comment
 # COPY --chown=jenkins:jenkins plugins.txt /usr/share/jenkins/ref/plugins.txt
 # RUN jenkins-plugin-cli -f /usr/share/jenkins/ref/plugins.txt
 ```
-### get password
+## get password
 ```bash
 # http://localhost:9090
 docker exec jenkins cat /var/jenkins_home/secrets/initialAdminPassword
 ```
-### set default plugins (takes a lot of time) check save plugins in plugins.txt
+## set default plugins (takes a lot of time) check save plugins in plugins.txt
 
-### get githubtoken
+## get githubtoken
 - GITHUB_TOKEN
 
-## Configuration
 
-### Manage Jenkins > Configure System > GitHub > Credentials
+# Configuration
+
+## Manage Jenkins > Configure System > GitHub > Credentials
 - Add GITHUB_TOKEN
 - Test connection
 
-### NewItem > DjangoJenkinsTest > FreeStyle project
+## NewItem > DjangoJenkinsTest > FreeStyle project
 
-### General > GitHub project > Project url
+## General > GitHub project > Project url
 - https://github.com/veledzimovich-iTechArt/todo/
 
-### Source Code Management > Git > Repository URL
+## Source Code Management > Git > Repository URL
 - https://github.com/veledzimovich-iTechArt/todo.git
 
-### Build Triggers
+## Build Triggers
 - GitHub hook trigger for GITScm polling
 
-### Build Environment
+## Build Environment
 - Add timestamps to the Console Output
 
-### Add Build Steps > Execute Shell
+## Add Build Steps > Execute Shell
 ``` bash
 PYENV_HOME=$WORKSPACE
 python3 -m venv $PYENV_HOME
@@ -92,9 +106,25 @@ coverage run --source='.' -m pytest backend
 coverage report
 ```
 
-### Build Now
+## Build Now
 
-### Run GitHub webhook locally
+
+# HOW TO
+## save plugins in plugins.txt
+```bash
+export PASS=$(docker exec todo_jenkins cat /var/jenkins_home/secrets/initialAdminPassword)
+export JENKINS_URL=http://localhost:9090
+curl -u admin:$PASS -sSL "$JENKINS_URL/pluginManager/api/xml?depth=1&xpath=/*/*/shortName|/*/*/version&wrapper=plugins" | perl -pe 's/.*?<shortName>([\w-]+).*?<version>([^<]+)()(<\/\w+>)+/\1 \2\n/g' | sed 's/ /:/'
+# copy output ot the plugins.txt
+```
+```Dockerfile
+# uncomment
+COPY --chown=jenkins:jenkins plugins.txt /usr/share/jenkins/ref/plugins.txt
+RUN jenkins-plugin-cli -f /usr/share/jenkins/ref/plugins.txt
+```
+
+## run GitHub webhook locally
+1. Setup ngrok
 ```bash
 # A.Veledzimovich@itechart-group.com GitHub
 curl -o ./ngrok-v3-stable-darwin-amd64.zip https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-darwin-amd64.zip
@@ -106,15 +136,8 @@ rm ngrok-v3-stable-darwin-amd64.zip
 ngrok http 9090
 # get Forwarding URL always new for free plan
 ```
-### Add/Update WebHook in GitHub Settings > Webhooks > Add Webhook
+2. Add/Update WebHook in GitHub Settings > Webhooks > Add Webhook
 - https://a9c4-82-209-202-210.eu.ngrok.io/github-webhook/
 
-# HOW TO
-## save plugins in plugins.txt
-```bash
-export PASS=$(docker exec todo_jenkins cat /var/jenkins_home/secrets/initialAdminPassword)
-export JENKINS_URL=http://localhost:9090
-curl -u admin:$PASS -sSL "$JENKINS_URL/pluginManager/api/xml?depth=1&xpath=/*/*/shortName|/*/*/version&wrapper=plugins" | perl -pe 's/.*?<shortName>([\w-]+).*?<version>([^<]+)()(<\/\w+>)+/\1 \2\n/g' | sed 's/ /:/'
-```
-## setup public server
-https://www.whizlabs.com/blog/integrate-jenkins-with-github/
+## [setup public server](https://www.whizlabs.com/blog/integrate-jenkins-with-github/)
+
