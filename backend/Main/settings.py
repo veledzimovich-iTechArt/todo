@@ -31,7 +31,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.environ.get('SECRET_KEY', '12345')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = bool(os.environ.get("DEBUG"))
+DEBUG = bool(os.environ.get('DEBUG'))
 
 # this is the host that Docker uses to run application
 ALLOWED_HOSTS = ['localhost', '0.0.0.0', 'api']
@@ -44,7 +44,7 @@ PROJECT_APPS = [
     'users',
     'cards'
 ]
-DEBUG_APPS = [app for app in ["debug_toolbar"] if DEBUG]
+DEBUG_APPS = [app for app in ['debug_toolbar'] if DEBUG]
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -66,7 +66,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     # debug
-    *[app for app in ["debug_toolbar.middleware.DebugToolbarMiddleware"] if DEBUG],
+    *[app for app in ['debug_toolbar.middleware.DebugToolbarMiddleware'] if DEBUG],
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     # rest
@@ -300,9 +300,9 @@ LOGGING = {
 # django-debug-toolbar
 if DEBUG:
     INTERNAL_IPS = [
-        "127.0.0.1"
+        '127.0.0.1'
     ]
     # add django-debug-toolbar in docker
     hostname, _, ips = socket.gethostbyname_ex(socket.gethostname())
 
-    INTERNAL_IPS += [".".join(ip.split(".")[:-1] + ["1"]) for ip in ips]
+    INTERNAL_IPS += ['.'.join(ip.split('.')[:-1] + ['1']) for ip in ips]

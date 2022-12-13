@@ -93,7 +93,7 @@ REDIS_HOST='127.0.0.1'
 load_dotenv()
 
 SECRET_KEY = os.environ.get('SECRET_KEY')
-DEBUG = bool(os.environ.get("DEBUG"))
+DEBUG = bool(os.environ.get('DEBUG'))
 # this is the host that Docker uses to run application
 ALLOWED_HOSTS = ['localhost', '0.0.0.0', 'api']
 
@@ -165,7 +165,7 @@ python manage.py createsuperuser --email a.veledzimovich@itechart-group.com --us
 python manage.py runserver
 ```
 
-## Add owner to the Todo
+## Add owner to the Todo app
 1. cards/models.py
 ```python
 class Todo(models.Model):
@@ -310,7 +310,7 @@ export function removeCookie(document, key) {
 Python: select interpreter > Enter interpreter path > Find
 
 ## fix 301 status
-edit Main.settings.py and add '/' in FE
+edit Main.settings.py and add '/' in React requests axios.get("/api/todos/")
 ```python
 APPEND_SLASH = False
 ```
@@ -321,7 +321,7 @@ python3 backend/manage.py shell
 ```
 ```python
 from django.contrib.auth.models import User
-User.objects.get(username="admin", is_superuser=True).delete()
+User.objects.get(username='admin', is_superuser=True).delete()
 ```
 
 ## reset migration
@@ -482,11 +482,21 @@ PROJECT_APPS = [
     # ...
 ]
 ```
+4. docker-compose.yaml
+```yaml
+    # ...
+    # comment python manage.py load_all_data if needed
+    command: >
+      bash -c "python manage.py migrate &&
+              python manage.py load_all_data &&
+              python manage.py runserver 0.0.0.0:8000"
+    # ...
+```
 
 ## add django debug toolbar
 1. Main/settings.py
 ```python
-DEBUG_APPS = [app for app in ["debug_toolbar"] if DEBUG]
+DEBUG_APPS = [app for app in ['debug_toolbar'] if DEBUG]
 INSTALLED_APPS = [
     # ...
     *DEBUG_APPS,
@@ -494,18 +504,18 @@ INSTALLED_APPS = [
 ]
 MIDDLEWARE = [
     # ...
-    "debug_toolbar.middleware.DebugToolbarMiddleware",
+    'debug_toolbar.middleware.DebugToolbarMiddleware',
     # ...
 ]
 
 if DEBUG:
     INTERNAL_IPS = [
-        "127.0.0.1"
+        '127.0.0.1'
     ]
     # add django-debug-toolbar in docker
     hostname, _, ips = socket.gethostbyname_ex(socket.gethostname())
 
-    INTERNAL_IPS += [".".join(ip.split(".")[:-1] + ["1"]) for ip in ips]
+    INTERNAL_IPS += ['.'.join(ip.split('.')[:-1] + ['1']) for ip in ips]
 ```
 2. Main/urls.py
 ```python
@@ -528,7 +538,7 @@ python manage.py migrate contenttypes zero
 python manage.py migrate sessions zero
 # manually remove DB tables for auth admin contenttypes sessions if they are exist
 ```
-3. Create user app
+3. Create users app
 ```bash
 python manage.py startapp users
 ```
@@ -568,6 +578,7 @@ AUTH_USER_MODEL = 'users.User'
 ```bash
 python manage.py makemigrations
 ```
+cards/migrations/0003_todo_owner.py
 ```python
 # edit migration and set default value for Card owner = 1
 field=models.ForeignKey(
@@ -636,7 +647,9 @@ admin.site.register(User, CustomUserAdmin)
 ```
 11. Change table name to users.User
 ```python
-# I generally wouldn't recommend renaming anything, because your database structure will become inconsistent. Some of the tables will have the users_ prefix, while some of them will have the auth_ prefix. But on the other hand, you could argue that the User model is now a part of the users app, so it shouldn't have the auth_ prefix.
+# I generally wouldn't recommend renaming anything, because your database structure will become inconsistent.
+# Some of the tables will have the users_ prefix, while some of them will have the auth_ prefix.
+# But on the other hand, you could argue that the User model is now a part of the users app, so it shouldn't have the auth_ prefix.
 class User(AbstractUser):
     email = models.EmailField(unique=True)
     phone = models.CharField(max_length=15, verbose_name='Phone', null=True, blank=True)
@@ -653,10 +666,10 @@ python manage.py migrate
 ```python
 INSTALLED_APPS = [
     # ...
-    "django_redis",
+    'django_redis',
     # ...
 ]
-REDIS_HOST = os.environ.get('REDIS_HOST')
+REDIS_HOST = os.environ.get('REDIS_HOST', '127.0.0.1')
 REDIS_PORT = '6379'
 
 REDIS_DEFAULT_CACHE_DB = '0'
@@ -700,7 +713,7 @@ redis-server --dbfilename dump.rdb --dir . --daemonize yes
 ```python
 INSTALLED_APPS = [
     # ...
-    "celery",
+    'celery',
     # ...
 ]
 
@@ -841,7 +854,7 @@ temporary disable app
 # remove all migrations
 python manage.py migrate silk zero
 # comment silk in INSTALLED_APPS and MIDDLEWARE in settings.py
-# comment "silk/" in urlpatterns
+# comment 'silk/' in urlpatterns
 ```
 
 ## setup GitHub/Actions
@@ -854,9 +867,9 @@ name: Django CI
 
 on:
   push:
-    branches: [ "master" ]
+    branches: [ 'master' ]
   pull_request:
-    branches: [ "master" ]
+    branches: [ 'master' ]
 
 jobs:
   build:
