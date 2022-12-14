@@ -13,15 +13,15 @@ from users.serilizers import (
 )
 from users.models import User
 
-logger_info = logging.getLogger('root')
-logger_warning = logging.getLogger('main-warning')
+_logger_info = logging.getLogger('root')
+_logger_warning = logging.getLogger('main-warning')
 
 
 class LoginView(views.APIView):
     permission_classes = (permissions.AllowAny,)
 
     def post(self, request: Request, *args, **kwargs) -> Response:
-        logger_info.info(f'Login: {request.user}')
+        _logger_info.info(f'Login: {request.user}')
 
         serializer = LoginSerializer(
             data=self.request.data,
@@ -44,9 +44,9 @@ class LogoutView(views.APIView):
 
     def get(self, request: Request, *args, **kwargs) -> Response:
         if request.user.is_anonymous:
-            logger_warning.warning(f'Logout: {request.user}')
+            _logger_warning.warning(f'Logout: {request.user}')
         else:
-            logger_info.info(f'Logout: {request.user}')
+            _logger_info.info(f'Logout: {request.user}')
         logout(request)
         return Response(status=status.HTTP_200_OK)
 

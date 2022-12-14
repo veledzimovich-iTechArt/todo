@@ -4,6 +4,8 @@
 
 [Run app](#run-app)
 
+[Run tests](#run-tests)
+
 [Initial Django setup](#initial-django-setup)
 
 [HOW TO](#how-to)
@@ -40,6 +42,11 @@ docker compose build
 docker compose up
 ```
 
+# Run tests
+```bash
+docker compose up
+docker exec todo_api coverage run --source='.' -m pytest .
+```
 
 # Initial Django setup
 ## Create project
@@ -337,7 +344,7 @@ python manage.py migrate users zero
 
 ## add pytest
 ```bash
-pip3 install pytest-django
+pip3 install pytest-django factory-boy
 touch pytest.ini
 ```
 pytest.ini
@@ -966,6 +973,7 @@ touch docker-compose.yaml
 ```
 ```bash
 docker-compose build
+# user defined name
 # docker-compose build -t veledzimovich/todo .
 docker-compose up
 # daemonize

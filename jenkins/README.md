@@ -101,7 +101,6 @@ PYENV_HOME=$WORKSPACE
 python3 -m venv $PYENV_HOME
 . $PYENV_HOME/bin/activate
 pip install -r backend/requirements.txt
-pip install pytest-django factory-boy coverage
 coverage run --source='.' -m pytest backend
 coverage report
 ```
@@ -112,7 +111,7 @@ coverage report
 # HOW TO
 ## save plugins in plugins.txt
 ```bash
-export PASS=$(docker exec todo_jenkins cat /var/jenkins_home/secrets/initialAdminPassword)
+export PASS=$(docker exec jenkins cat /var/jenkins_home/secrets/initialAdminPassword)
 export JENKINS_URL=http://localhost:9090
 curl -u admin:$PASS -sSL "$JENKINS_URL/pluginManager/api/xml?depth=1&xpath=/*/*/shortName|/*/*/version&wrapper=plugins" | perl -pe 's/.*?<shortName>([\w-]+).*?<version>([^<]+)()(<\/\w+>)+/\1 \2\n/g' | sed 's/ /:/'
 # copy output ot the plugins.txt

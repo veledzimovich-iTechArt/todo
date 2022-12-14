@@ -228,7 +228,7 @@ CELERY_ENABLE_UTC = True
 CELERY_BEAT_SCHEDULE = {
     'notify_users': {
         'task': 'cards.tasks.notify_users',
-        'schedule': crontab(minute='*/5')
+        'schedule': crontab(minute='*/30')
     },
 }
 

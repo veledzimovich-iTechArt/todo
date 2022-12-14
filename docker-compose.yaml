@@ -43,6 +43,7 @@ services:
     ports:
       - "8000:8000"
     volumes:
+      - ./backend/tests:/backend/tests
       - ./backend/core:/backend/core
       - ./backend/cards:/backend/cards
       - ./backend/Main:/backend/Main

@@ -1,8 +1,6 @@
 from rest_framework import serializers
 from cards.models import Tag, Todo
 
-# Simple default implementations for the create() and update() methods.
-
 
 class TagSerializer(serializers.ModelSerializer):
     class Meta:

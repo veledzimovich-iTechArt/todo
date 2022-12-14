@@ -7,4 +7,3 @@ README.md
 .git
 .gitignore
 requirements-dev.txt
-pytest.ini

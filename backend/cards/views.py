@@ -54,7 +54,6 @@ class TagView(
         viewsets.GenericViewSet
 ):
     serializer_class = TagSerializer
-    queryset = Tag.objects.all()
     permission_classes = [
         permissions.IsAuthenticatedOrReadOnly
     ]
