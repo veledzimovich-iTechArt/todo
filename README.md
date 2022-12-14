@@ -42,13 +42,16 @@ docker compose build
 docker compose up
 ```
 
+
 # Run tests
 ```bash
 docker compose up
 docker exec todo_api coverage run --source='.' -m pytest .
 ```
 
+
 # Initial Django setup
+
 ## Create project
 ```bash
 mkdir todo
@@ -66,10 +69,12 @@ cd backend/
 # Note the trailing '.' character
 django-admin startproject Main .
 ```
+
 ## Add database
 ```bash
 psql -c 'create database todo;'
 ```
+
 ## Add apps
 ```bash
 python manage.py startapp users

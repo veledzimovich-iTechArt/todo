@@ -2,7 +2,9 @@
 
 # Content
 
-[Setup](#setup)
+[Run Jenkins](#run-jenkins)
+
+[Initial Jenkins setup](#initial-jenkins-setup)
 
 [Configuration](#configuration)
 
@@ -12,7 +14,13 @@
 - [setup public server](#setup-public-server)
 
 
-# Setup
+# Run Jenkins
+```bash
+docker compose up
+```
+
+
+# Initial Jenkins setup
 ```bash
 mkdir jenkins
 touch jenkins/Dockerfile
@@ -20,6 +28,7 @@ touch jenkins/docker-compose.yaml
 touch jenkins/plugins.txt
 touch .dockerignore
 ```
+
 ## update jenkins/docker-compose.yaml
 ```yaml
 version: "3"
@@ -58,17 +67,23 @@ services:
     depends_on:
      - db
 ```
+
 ## build without plugins
 ```Dockerfile
 # comment
 # COPY --chown=jenkins:jenkins plugins.txt /usr/share/jenkins/ref/plugins.txt
 # RUN jenkins-plugin-cli -f /usr/share/jenkins/ref/plugins.txt
 ```
+```bash
+docker compose build
+```
+
 ## get password
 ```bash
 # http://localhost:9090
 docker exec jenkins cat /var/jenkins_home/secrets/initialAdminPassword
 ```
+
 ## set default plugins (takes a lot of time) check save plugins in plugins.txt
 
 ## get githubtoken
