@@ -69,6 +69,7 @@ services:
 ```
 
 ## build without plugins
+Dockerfile
 ```Dockerfile
 # comment
 # COPY --chown=jenkins:jenkins plugins.txt /usr/share/jenkins/ref/plugins.txt
