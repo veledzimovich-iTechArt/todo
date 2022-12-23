@@ -787,6 +787,22 @@ celery -A Main worker -l INFO --concurrency=2 -B -s celerybeat-schedule
 ```
 
 ## [setup logging](https://docs.djangoproject.com/en/4.1/topics/logging/)
+1. Add logs
+```bash
+mkdir backend/Main/logs
+touch backend/Main/logs/.gitkeep
+```
+2. runserver
+```bash
+python manage.py runserver
+```
+3. backend/.gitignore
+```bash
+# ...
+# logs
+Main/logs/celery.log
+Main/logs/Main.log
+```
 
 ## setup debug & profiling
 

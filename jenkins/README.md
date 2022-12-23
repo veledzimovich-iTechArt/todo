@@ -130,8 +130,9 @@ coverage report
 export PASS=$(docker exec jenkins cat /var/jenkins_home/secrets/initialAdminPassword)
 export JENKINS_URL=http://localhost:9090
 curl -u admin:$PASS -sSL "$JENKINS_URL/pluginManager/api/xml?depth=1&xpath=/*/*/shortName|/*/*/version&wrapper=plugins" | perl -pe 's/.*?<shortName>([\w-]+).*?<version>([^<]+)()(<\/\w+>)+/\1 \2\n/g' | sed 's/ /:/'
-# copy output ot the plugins.txt
+# copy output to the plugins.txt
 ```
+Dockerfile
 ```Dockerfile
 # uncomment
 COPY --chown=jenkins:jenkins plugins.txt /usr/share/jenkins/ref/plugins.txt

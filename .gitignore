@@ -1,0 +1,12 @@
+.gitignore
+.DS_Store
+.pytest_cache/
+.coverage
+.sourcery.yaml
+.vscode
+.flake8
+celerybeat-schedule.db
+dump.rdb
+local_backup.sql
+postgres-data/
+venv-django/
