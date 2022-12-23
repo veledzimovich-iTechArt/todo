@@ -8,8 +8,9 @@ from rest_framework import views
 from rest_framework.response import Response
 from rest_framework.request import Request
 
+from users.permissions import IsProfileOwner
 from users.serilizers import (
-    LoginSerializer, UserSerializer, UserRegisterSerializer
+    LoginSerializer, UserProfileSerializer, UserSerializer, UserRegisterSerializer
 )
 from users.models import User
 
@@ -73,3 +74,11 @@ class UserDetailView(generics.RetrieveAPIView):
 
     def get(self, request: Request, *args, **kwargs) -> Response:
         return self.retrieve(request, *args, **kwargs)
+
+
+class UserProfileView(UserDetailView):
+    serializer_class = UserProfileSerializer
+    permission_classes = [
+        permissions.IsAuthenticated,
+        IsProfileOwner
+    ]

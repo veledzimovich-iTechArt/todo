@@ -230,6 +230,11 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'cards.tasks.notify_users',
         'schedule': crontab(minute='*/30')
     },
+    'remove_unused_tags': {
+        'task': 'cards.tasks.remove_unused_tags',
+        # 'schedule': crontab(hour=7, day_of_week=1)
+        'schedule': crontab(minute='*/30')
+    },
 }
 
 PROJECT_DIR = os.path.abspath(os.path.dirname(__file__))
