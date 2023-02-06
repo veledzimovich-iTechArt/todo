@@ -8,7 +8,7 @@ from rest_framework import views
 from rest_framework.response import Response
 from rest_framework.request import Request
 
-from users.serilizers import (
+from users.serializers import (
     LoginSerializer, UserSerializer, UserRegisterSerializer
 )
 from users.models import User

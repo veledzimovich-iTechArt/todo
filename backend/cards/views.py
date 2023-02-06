@@ -15,7 +15,7 @@ from cards.permissions import IsOwnerOrReadOnly
 #                    mixins.UpdateModelMixin,
 #                    mixins.DestroyModelMixin,
 #                    mixins.ListModelMixin,
-#                    GenericViewSet):
+#                    viewsets.GenericViewSet):
 # GenericViewSet(ViewSetMixin, generics.GenericAPIView)
 
 
