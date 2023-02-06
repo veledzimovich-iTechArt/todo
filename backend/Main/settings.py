@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.1/ref/settings/
 """
 
+
 import socket
 import os
 from dotenv import load_dotenv
@@ -190,20 +191,22 @@ REDIS_LOGIN_ATTEMPTS_DB = '2'
 CACHES = {
     'default': {
         'BACKEND': 'django_redis.cache.RedisCache',
-        'LOCATION': 'redis://{}:{}/{}'.format(REDIS_HOST, REDIS_PORT, REDIS_DEFAULT_CACHE_DB),
+        'LOCATION': f'redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_DEFAULT_CACHE_DB}',
         'OPTIONS': {
             'CLIENT_CLASS': 'django_redis.client.DefaultClient',
         },
-        'TIMEOUT': 60 * 60 * 24  # one day
+        # one day
+        'TIMEOUT': 60 * 60 * 24,
     },
     'session': {
         'BACKEND': 'django_redis.cache.RedisCache',
-        'LOCATION': 'redis://{}:{}/{}'.format(REDIS_HOST, REDIS_PORT, REDIS_SESSION_DB),
+        'LOCATION': f'redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_SESSION_DB}',
         'OPTIONS': {
             'CLIENT_CLASS': 'django_redis.client.DefaultClient',
         },
-        'TIMEOUT': 60 * 60 * 24  # one day
-    }
+        # one day
+        'TIMEOUT': 60 * 60 * 24,
+    },
 }
 
 DISABLE_CACHE = False

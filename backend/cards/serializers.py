@@ -22,7 +22,8 @@ class TodoSerializer(serializers.ModelSerializer):
         fields = ('id', 'owner', 'title', 'description', 'completed', 'tags')
 
     def get_tags(self, tags: dict) -> list:
-        return [tag.get('id') for tag in tags]
+        valid_tags = Tag.objects.values_list('id', flat=True)
+        return [tag.get('id') for tag in tags if tag.get('id') in valid_tags]
 
     def create(self, validated_data: dict) -> Todo:
         tags = validated_data.pop('tags', None)

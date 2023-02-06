@@ -11,10 +11,10 @@ class BaseCardsTest(APITestCase):
     @classmethod
     def setUpTestData(cls) -> None:
         cls.user = UserFactory()
-        cls.todos = [TodoFactory(owner=cls.user) for i in range(10)]
+        cls.todos = [TodoFactory(owner=cls.user) for _ in range(10)]
         cls.other_todo = TodoFactory()
 
-        cls.tags = [TagFactory() for i in range(2)]
+        cls.tags = [TagFactory() for _ in range(2)]
 
         cls.todos[0].tags.add(cls.tags[0].id)
         cls.todos[0].tags.add(cls.tags[1].id)

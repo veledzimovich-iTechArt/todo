@@ -18,10 +18,14 @@ class TestUserListView(BaseUserTest):
             response = call_method(self.user_list_url)
             self.assertEqual(response.status_code, status.HTTP_200_OK)
 
+    def test_post_method_unauth_forbidden(self):
+        response = self.client.post(self.user_list_url)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
     def test_all_write_methods_unauth_forbidden(self):
-        for method in ['post', 'put', 'patch', 'delete']:
+        for method in ['put', 'patch', 'delete']:
             call_method = getattr(self.client, method.lower())
-            response = call_method(self.user_list_url)
+            response = call_method(self.user_detail_url)
             self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_get_list_auth_success(self):

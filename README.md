@@ -1,4 +1,6 @@
-# DjangoRest
+# todo
+
+## DjangoRest
 
 # Content
 
@@ -56,7 +58,7 @@ docker exec todo_api coverage run --source='.' -m pytest .
 ```bash
 mkdir todo
 cd todo/
-python3 -m venv django
+python3 -m venv venv-django
 source venv-django/bin/activate
 mkdir backend
 # common
@@ -104,6 +106,10 @@ REDIS_HOST='127.0.0.1'
 
 1. Main/settings.py
 ```python
+import os
+from dotenv import load_dotenv
+from pathlib import Path
+
 load_dotenv()
 
 SECRET_KEY = os.environ.get('SECRET_KEY')
@@ -111,7 +117,7 @@ DEBUG = bool(os.environ.get('DEBUG'))
 # this is the host that Docker uses to run application
 ALLOWED_HOSTS = ['localhost', '0.0.0.0', 'api']
 
-AUTH_USER_MODEL = 'user.User'
+AUTH_USER_MODEL = 'users.User'
 PROJECT_APPS = [
     'users',
     'cards'
@@ -172,6 +178,7 @@ class User(AbstractUser):
 7. Main/urls.py
 8. First run
 ```bash
+python manage.py makemigrations
 python manage.py migrate
 
 python manage.py createsuperuser --email a.veledzimovich@itechart-group.com --username admin
@@ -237,7 +244,7 @@ REST_FRAMEWORK = {
     ],
 }
 ```
-2. users/serilizers.py
+2. users/serializers.py
 ```python
 from django.contrib.auth import password_validation
 class LoginSerializer(serializers.Serializer):
@@ -342,15 +349,15 @@ User.objects.get(username='admin', is_superuser=True).delete()
 ## reset migration
 ```bash
 # all
-python3 manage.py flush
+python3 backend/manage.py flush
 # app
-python manage.py migrate users zero
+python backend/manage.py migrate users zero
 ```
 
 ## add pytest
 ```bash
 pip3 install pytest-django factory-boy
-touch pytest.ini
+touch backend/pytest.ini
 ```
 pytest.ini
 ```ini
@@ -396,6 +403,7 @@ python manage.py makemigrations
 
 3. add CITextExtension() in migration
 ```python
+# if citext added after DB setup
 from django.contrib.postgres.operations import CITextExtension
 from django.db import migrations, models
 
@@ -518,8 +526,7 @@ INSTALLED_APPS = [
     # ...
 ]
 MIDDLEWARE = [
-    # ...
-    'debug_toolbar.middleware.DebugToolbarMiddleware',
+    *[app for app in ['debug_toolbar.middleware.DebugToolbarMiddleware'] if DEBUG],
     # ...
 ]
 
@@ -534,6 +541,9 @@ if DEBUG:
 ```
 2. Main/urls.py
 ```python
+from django.conf import settings
+from django.urls import path, include
+
 urlpatterns = [
     # ...
     path('__debug__/', include('debug_toolbar.urls')),

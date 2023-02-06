@@ -31,5 +31,6 @@ class BaseUserTest(APITestCase):
         cls.logout_url = reverse_lazy('logout')
         cls.register_url = reverse_lazy('register')
         cls.user_list_url = reverse_lazy('users')
+        cls.user_detail_url = reverse_lazy('user', args=(cls.user.id,))
 
         cls.user_profile = reverse_lazy('user-profile', args=(cls.user.id,))
