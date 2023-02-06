@@ -160,9 +160,10 @@ class App extends Component {
       } else if (err.response.status === 500) {
         console.log(err);
       } else {
-        Object.keys(err.response.data).forEach(key => {
-          alert(...err.response.data[key])
-        });
+        console.log(err);
+        // Object.keys(err.response.data).forEach(key => {
+        //   alert(...err.response.data[key])
+        // });
       }
     } else {
       console.log(err);

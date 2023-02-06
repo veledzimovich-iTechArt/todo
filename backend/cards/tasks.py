@@ -21,5 +21,5 @@ def notify_users() -> None:
     else:
         _logger_info.info('Waiting for notification')
     # not exists function will be added in the next release
-    TodoUtil.send_email()
+    # TodoUtil.send_email()
     _logger_info.warning('Done')
