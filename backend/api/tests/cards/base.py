@@ -22,6 +22,6 @@ class BaseCardsTest(APITestCase):
         cls.todos[2].tags.add(cls.tags[1].id)
 
         cls.todos_url = reverse_lazy('todo-list')
-        cls.todos_detail_url = reverse_lazy('todo-detail', args=(cls.todos[-1].id,))
+        cls.todo_detail_url = reverse_lazy('todo-detail', args=(cls.todos[-1].id,))
         cls.tags_url = reverse_lazy('tag-list')
-        cls.tags_detail_url = reverse_lazy('tag-detail', args=(cls.tags[-1].id,))
+        cls.tag_detail_url = reverse_lazy('tag-detail', args=(cls.tags[-1].id,))

@@ -17,3 +17,6 @@ class TestTodoModel(TestCase):
 
     def test_get_default_incompleted(self) -> None:
         self.assertEqual(self.todo.completed, False)
+
+    def test_get_title(self) -> None:
+        self.assertEqual(str(self.todo), self.todo.title)

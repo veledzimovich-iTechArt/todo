@@ -11,7 +11,7 @@ class TestGetTagView(BaseCardsTest):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), len(self.tags))
 
-        response = self.client.get(self.tags_detail_url)
+        response = self.client.get(self.tag_detail_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), len(self.tags))
 
@@ -21,7 +21,7 @@ class TestGetTagView(BaseCardsTest):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), len(self.tags))
 
-        response = self.client.get(self.tags_detail_url)
+        response = self.client.get(self.tag_detail_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['id'], self.tags[-1].id)
 
@@ -50,7 +50,7 @@ class TestPostTagView(BaseCardsTest):
 class TestDeleteTagView(BaseCardsTest):
 
     def test_delete_tag_unauth_user_forbidden(self) -> None:
-        response = self.client.delete(self.tags_detail_url)
+        response = self.client.delete(self.tag_detail_url)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(
             response.data['detail'], 'Authentication credentials were not provided.'
@@ -58,6 +58,6 @@ class TestDeleteTagView(BaseCardsTest):
 
     def test_delete_tag_auth_user_success(self) -> None:
         self.client.force_authenticate(self.user)
-        response = self.client.delete(self.tags_detail_url)
+        response = self.client.delete(self.tag_detail_url)
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertIsNone(response.data)

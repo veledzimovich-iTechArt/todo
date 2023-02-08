@@ -20,3 +20,6 @@ class TestTagModel(TestCase):
             self.assertEqual(type(err), IntegrityError)
         else:
             self.fail('IntegrityError not raised')
+
+    def test_get_title(self) -> None:
+        self.assertEqual(str(self.tag), self.tag.title)

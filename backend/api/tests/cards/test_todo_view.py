@@ -23,11 +23,35 @@ class TestGetTodoView(BaseCardsTest):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), len(self.todos))
 
+    def test_get_todos_auth_admin_success(self) -> None:
+        self.user.is_superuser = True
+        self.user.save(update_fields=('is_superuser',))
+        self.client.force_authenticate(self.user)
+
+        response = self.client.get(self.todos_url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), len(self.todos) + 1)
+
     def test_get_todos_for_specific_owner_success(self) -> None:
         self.client.force_authenticate(self.other_todo.owner)
         response = self.client.get(self.todos_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 1)
+
+    def test_get_todo_admin_specific_owner_success(self) -> None:
+        self.other_todo.owner.is_superuser = True
+        self.other_todo.owner.save(update_fields=('is_superuser',))
+        self.client.force_authenticate(self.other_todo.owner)
+
+        response = self.client.get(self.todo_detail_url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['id'], self.todos[-1].id)
+
+    def test_get_todo_specific_owner_not_found(self) -> None:
+        self.client.force_authenticate(self.other_todo.owner)
+
+        response = self.client.get(self.todo_detail_url)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_get_complete_success(self) -> None:
         self.other_todo.completed = True
@@ -133,7 +157,7 @@ class TestPutTodoView(BaseCardsTest):
             'tags': []
         }
 
-        response = self.client.put(self.todos_detail_url, data=data, format='json')
+        response = self.client.put(self.todo_detail_url, data=data, format='json')
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(
             response.data['detail'], 'Authentication credentials were not provided.'
@@ -148,7 +172,7 @@ class TestPutTodoView(BaseCardsTest):
         }
         self.client.force_authenticate(self.user)
 
-        response = self.client.put(self.todos_detail_url, data=data, format='json')
+        response = self.client.put(self.todo_detail_url, data=data, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['title'], DATA['title'])
         self.assertEqual(response.data['description'], DATA['description'])
@@ -163,7 +187,7 @@ class TestPatchTodoView(BaseCardsTest):
 
         data = {**DATA}
 
-        response = self.client.patch(self.todos_detail_url, data=data, format='json')
+        response = self.client.patch(self.todo_detail_url, data=data, format='json')
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(
             response.data['detail'], 'Authentication credentials were not provided.'
@@ -177,7 +201,7 @@ class TestPatchTodoView(BaseCardsTest):
         }
         self.client.force_authenticate(self.user)
 
-        response = self.client.patch(self.todos_detail_url, data=data, format='json')
+        response = self.client.patch(self.todo_detail_url, data=data, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['title'], self.todos[-1].title)
         self.assertEqual(response.data['description'], self.todos[-1].description)
@@ -189,7 +213,7 @@ class TestPatchTodoView(BaseCardsTest):
 class TestDeleteTodoView(BaseCardsTest):
 
     def test_delete_tag_unauth_user_forbidden(self) -> None:
-        response = self.client.delete(self.todos_detail_url)
+        response = self.client.delete(self.todo_detail_url)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(
             response.data['detail'], 'Authentication credentials were not provided.'
@@ -197,6 +221,6 @@ class TestDeleteTodoView(BaseCardsTest):
 
     def test_delete_tag_auth_user_success(self) -> None:
         self.client.force_authenticate(self.user)
-        response = self.client.delete(self.todos_detail_url)
+        response = self.client.delete(self.todo_detail_url)
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertIsNone(response.data)
