@@ -63,10 +63,10 @@ python3 -m venv venv-django
 source venv-django/bin/activate
 mkdir backend
 # common
-pip3 install django djangorestframework django-cors-headers celery django-redis psycopg2 python-dotenv pytest-django factory-boy pytest coverage pytest-cov
+pip3 install django djangorestframework django-cors-headers celery django-redis psycopg2 python-dotenv pytest-django factory-boy pytest coverage
 pip3 freeze > backend/requirements.txt
 # dev
-pip3 install autopep8 flake8 pycodestyle memory_profiler django-debug-toolbar
+pip3 install autopep8 flake8 pycodestyle memory_profiler django-debug-toolbar pytest-cov
 pip3 freeze > backend/requirements-dev.txt
 cd backend/
 # Note the trailing '.' character
