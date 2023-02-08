@@ -16,7 +16,8 @@
 - [remove admin](#remove-admin)
 - [reset migration](#reset-migration)
 - [add pytest](#add-pytest)
-- [add coverage](#add-coverage)
+- [measure coverage](#measure-coverage)
+- [test exception](#test-exception)
 - [reproducible random values with factory-boy](#reproducible-random-values-with-factory-boy)
 - [set database extension for case-insensitive](#set-database-extension-for-case-insensitive)
 - [check migration](#check-migration)
@@ -62,10 +63,10 @@ python3 -m venv venv-django
 source venv-django/bin/activate
 mkdir backend
 # common
-pip3 install django djangorestframework django-cors-headers celery django-redis psycopg2 python-dotenv
+pip3 install django djangorestframework django-cors-headers celery django-redis psycopg2 python-dotenv pytest-django factory-boy pytest coverage pytest-cov
 pip3 freeze > backend/requirements.txt
 # dev
-pip3 install autopep8 flake8 pycodestyle pytest memory_profiler django-debug-toolbar pytest-django factory-boy coverage
+pip3 install autopep8 flake8 pycodestyle memory_profiler django-debug-toolbar
 pip3 freeze > backend/requirements-dev.txt
 cd backend/
 # Note the trailing '.' character
@@ -201,8 +202,26 @@ class TodoView(viewsets.ModelViewSet):
         # for list
         permissions.IsAuthenticatedOrReadOnly,
         # for object allows to edit only for the owner
-        IsOwnerOrReadOnly
+        IsOwnerOrAdminReadOnly
     ]
+
+    def get_queryset(self) -> QuerySet:
+        tags = self.request.query_params.getlist('tags')
+        filtered = (
+            {}
+            if self.request.user.is_superuser else
+            {'owner_id': self.request.user.id}
+        )
+        queryset = (
+            Todo.objects
+            .filter(**filtered)
+            .select_related('owner')
+            .prefetch_related('tags')
+        )
+        return (
+            queryset.filter(tags__id__in=tags).distinct()
+            if tags else queryset
+        )
 
     def perform_create(self, serializer: TodoSerializer) -> None:
         serializer.validated_data['owner'] = self.request.user
@@ -216,16 +235,16 @@ urlpatterns += [
 ```
 4. cards/permissions.py
 ```python
-class IsOwnerOrReadOnly(permissions.BasePermission):
+class IsOwnerOrAdminReadOnly(permissions.BasePermission):
     """
     Custom permission to only allow owners of an object to edit it.
     """
 
     def has_object_permission(self, request, view, obj) -> bool:
-        # Read permissions are allowed to any request,
-        # so we'll always allow GET, HEAD or OPTIONS requests.
+        # Read permissions are allowed to admin,
+
         if request.method in permissions.SAFE_METHODS:
-            return True
+            return request.user.is_superuser
 
         # Write permissions are only allowed to the owner of the snippet.
         return obj.owner == request.user
@@ -366,14 +385,71 @@ DJANGO_SETTINGS_MODULE = api.settings
 python_files = tests.py test_*.py *_tests.py
 ```
 
-## add coverage
+## measure coverage
+1. Install coverage
 ```bash
 pip3 install coverage
+```
+2. Run coverage
+```bash
 coverage run --source='.' -m pytest backend
 coverage run --source='.' -m unittest discover backend
 coverage run --source='.' backend/manage.py test backend
 coverage report
 coverage html
+```
+1. Install pytest-cov
+```bash
+pip3 install pytest-cov
+touch backend/.coveragerc
+```
+2. backend/.coveragerc
+```bash
+[run]
+omit = api/tests/*,api/asgi.py,api/wsgi.py,manage.py,*/migrations/*
+```
+3. backend/pytest.ini
+``` ini
+addopts = --cov=.
+          --cov-report term-missing:skip-covered
+          --cov-fail-under 100
+```
+4. Run pytests
+```bash
+pytest -rf .
+```
+5. Check missing lines
+``` bash
+---------- coverage: platform darwin, python 3.10.9-final-0 ----------
+Name                                Stmts   Miss  Cover   Missing
+-----------------------------------------------------------------
+cards/models.py                        19      2    89%   16, 30
+cards/permissions.py                    6      1    83%   14
+-----------------------------------------------------------------
+TOTAL                                 875     40    95%
+```
+
+## tests exception
+```python
+class TestLoginView(BaseUserTest):
+# ...
+    def test_no_user_no_password_serializer_error(self) -> None:
+        serializer = LoginSerializer(
+            data={
+                'username': '',
+                'password': ''
+            }
+        )
+        try:
+            serializer.validate(serializer.initial_data)
+            serializer.is_valid(raise_exception=True)
+        except serializers.ValidationError as err:
+            self.assertEqual(
+                str(err.detail[0]),
+                'Both "username" and "password" are required.'
+            )
+        else:
+            self.fail('ValidationError is not raised')
 ```
 
 ## reproducible random values with factory-boy

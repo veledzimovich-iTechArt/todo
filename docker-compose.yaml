@@ -43,9 +43,9 @@ services:
     ports:
       - "8000:8000"
     volumes:
+      - ./backend/api:/backend/api
       - ./backend/core:/backend/core
       - ./backend/cards:/backend/cards
-      - ./backend/api:/backend/api
       - ./backend/users:/backend/users
       - ./backend/manage.py:/backend/manage.py
     command: >

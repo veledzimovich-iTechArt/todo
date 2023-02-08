@@ -6,7 +6,7 @@ from rest_framework import viewsets
 
 from cards.serializers import TagSerializer, TodoSerializer
 from cards.models import Tag, Todo
-from cards.permissions import IsOwnerOrReadOnly
+from cards.permissions import IsOwnerOrAdminReadOnly
 
 # Create your views here.
 
@@ -25,14 +25,19 @@ class TodoView(viewsets.ModelViewSet):
         # for list
         permissions.IsAuthenticatedOrReadOnly,
         # for object allows to edit only for the owner
-        IsOwnerOrReadOnly,
+        IsOwnerOrAdminReadOnly,
     ]
 
     def get_queryset(self) -> QuerySet:
         tags = self.request.query_params.getlist('tags')
+        filtered = (
+            {}
+            if self.request.user.is_superuser else
+            {'owner_id': self.request.user.id}
+        )
         queryset = (
             Todo.objects
-            .filter(owner_id=self.request.user.id)
+            .filter(**filtered)
             .select_related('owner')
             .prefetch_related('tags')
         )
