@@ -1,7 +1,7 @@
 from rest_framework.permissions import SAFE_METHODS
 from rest_framework import status
 
-from tests.users.base import BaseUserTest
+from api.tests.users.base import BaseUserTest
 from users.models import User
 
 

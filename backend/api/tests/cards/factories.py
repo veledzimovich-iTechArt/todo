@@ -1,6 +1,6 @@
 import factory
 from cards.models import Tag, Todo
-from tests.users.factories import UserFactory
+from api.tests.users.factories import UserFactory
 
 
 class TodoFactory(factory.django.DjangoModelFactory):

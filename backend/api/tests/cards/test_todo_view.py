@@ -1,6 +1,6 @@
 from rest_framework import status
 
-from tests.cards.base import BaseCardsTest
+from api.tests.cards.base import BaseCardsTest
 
 DATA = {
     'title': 'test',

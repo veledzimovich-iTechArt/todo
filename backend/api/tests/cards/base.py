@@ -2,8 +2,8 @@
 from rest_framework.reverse import reverse_lazy
 from rest_framework.test import APITestCase
 
-from tests.cards.factories import TodoFactory, TagFactory
-from tests.users.factories import UserFactory
+from api.tests.cards.factories import TodoFactory, TagFactory
+from api.tests.users.factories import UserFactory
 
 
 class BaseCardsTest(APITestCase):

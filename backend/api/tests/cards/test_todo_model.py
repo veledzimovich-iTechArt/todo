@@ -1,7 +1,7 @@
 # sourcery skip: snake-case-functions
 from django.test import TestCase
 
-from tests.cards.factories import TodoFactory
+from api.tests.cards.factories import TodoFactory
 
 # Create your tests here.
 

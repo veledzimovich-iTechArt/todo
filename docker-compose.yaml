@@ -43,10 +43,9 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - ./backend/tests:/backend/tests
       - ./backend/core:/backend/core
       - ./backend/cards:/backend/cards
-      - ./backend/Main:/backend/Main
+      - ./backend/api:/backend/api
       - ./backend/users:/backend/users
       - ./backend/manage.py:/backend/manage.py
     command: >
@@ -68,7 +67,7 @@ services:
     restart: always
     build:
       context: ./backend
-    command: celery -A Main worker -l INFO --concurrency=2 -B -s celerybeat-schedule
+    command: celery -A api worker -l INFO --concurrency=2 -B -s celerybeat-schedule
     env_file:
       - ./backend/.env
     environment:

@@ -8,8 +8,8 @@ from cards.models import Tag, Todo
 from cards.tasks import notify_users, remove_unused_tags
 from cards.utils import TodoUtil
 from users.models import User
-from tests.cards.factories import TodoFactory, TagFactory
-from tests.users.factories import UserFactory
+from api.tests.cards.factories import TodoFactory, TagFactory
+from api.tests.users.factories import UserFactory
 
 
 class TestCardsTask(TestCase):

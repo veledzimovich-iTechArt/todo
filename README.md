@@ -69,7 +69,7 @@ pip3 install autopep8 flake8 pycodestyle pytest memory_profiler django-debug-too
 pip3 freeze > backend/requirements-dev.txt
 cd backend/
 # Note the trailing '.' character
-django-admin startproject Main .
+django-admin startproject api .
 ```
 
 ## Add database
@@ -104,7 +104,7 @@ DATABASE_CONN_MAX_AGE=600
 REDIS_HOST='127.0.0.1'
 ```
 
-1. Main/settings.py
+1. api/settings.py
 ```python
 import os
 from dotenv import load_dotenv
@@ -175,7 +175,7 @@ class User(AbstractUser):
 4. cards/admin.py
 5. cards/serializers.py
 6. cards/views.py
-7. Main/urls.py
+7. api/urls.py
 8. First run
 ```bash
 python manage.py makemigrations
@@ -208,7 +208,7 @@ class TodoView(viewsets.ModelViewSet):
         serializer.validated_data['owner'] = self.request.user
         super().perform_create(serializer)
 ```
-3. Main/urls.py
+3. api/urls.py
 ```python
 urlpatterns += [
     path('api-auth/', include('rest_framework.urls')),
@@ -233,7 +233,7 @@ class IsOwnerOrReadOnly(permissions.BasePermission):
 
 ## Add user auth
 ### [Sesssion based](https://kylebebak.github.io/post/django-rest-framework-auth-csrf)
-1. Main.settings.py
+1. api.settings.py
 ```python
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
@@ -276,7 +276,7 @@ re_path(r'^login/', LoginView.as_view(), name='login'),
 re_path(r'^logout/', LogoutView.as_view(), name='logout'),
 re_path(r'^register/', UserRegisterView.as_view(), name='register')
 ```
-5. Main.settings.py
+5. api.settings.py
 ```python
 CSRF_COOKIE_HTTPONLY = False
 SESSION_COOKIE_HTTPONLY = True
@@ -332,7 +332,7 @@ export function removeCookie(document, key) {
 Python: select interpreter > Enter interpreter path > Find
 
 ## fix 301 status
-edit Main.settings.py and add '/' in React requests axios.get("/api/todos/")
+edit api.settings.py and add '/' in React requests axios.get("/api/todos/")
 ```python
 APPEND_SLASH = False
 ```
@@ -362,7 +362,7 @@ touch backend/pytest.ini
 pytest.ini
 ```ini
 [pytest]
-DJANGO_SETTINGS_MODULE = Main.settings
+DJANGO_SETTINGS_MODULE = api.settings
 python_files = tests.py test_*.py *_tests.py
 ```
 
@@ -449,9 +449,9 @@ python backend/manage.py check
 ## dump fixtures
 ```bash
 # all
-python3 backend/manage.py dumpdata -o backend/Main/initial_data.json
+python3 backend/manage.py dumpdata -o backend/api/initial_data.json
 # exclude
-python3 backend/manage.py dumpdata --exclude cards.todo --format=json cards > backend/Main/initial_data.json
+python3 backend/manage.py dumpdata --exclude cards.todo --format=json cards > backend/api/initial_data.json
 # specific
 python3 backend/manage.py dumpdata users.User > backend/users/fixtures/users_data.json
 ```
@@ -497,7 +497,7 @@ class Command(BaseCommand):
             for fixture in cards_fixtures:
                 call_command('loaddata', f'{fixture}')
 ```
-3. Main/settings.py
+3. api/settings.py
 ```python
 PROJECT_APPS = [
     # core app created for manage fixtures
@@ -517,7 +517,7 @@ PROJECT_APPS = [
 ```
 
 ## add django debug toolbar
-1. Main/settings.py
+1. api/settings.py
 ```python
 DEBUG_APPS = [app for app in ['debug_toolbar'] if DEBUG]
 INSTALLED_APPS = [
@@ -539,7 +539,7 @@ if DEBUG:
 
     INTERNAL_IPS += ['.'.join(ip.split('.')[:-1] + ['1']) for ip in ips]
 ```
-2. Main/urls.py
+2. api/urls.py
 ```python
 from django.conf import settings
 from django.urls import path, include
@@ -551,7 +551,7 @@ urlpatterns = [
 ```
 
 ## create custom user model when app has data in database
-1. Main.settings.py
+1. api.settings.py
 ```python
 AUTH_USER_MODEL = 'auth.User'
 ```
@@ -571,7 +571,7 @@ python manage.py startapp users
 ```python
 # from django.contrib.auth import get_user_model
 # same
-from Main.settings import AUTH_USER_MODEL
+from api.settings import AUTH_USER_MODEL
 
 class Todo(models.Model):
     # set owner
@@ -596,7 +596,7 @@ class User(AbstractUser):
         db_table = 'auth_user'
 ```
 
-6. Main.settings.py
+6. api.settings.py
 ```python
 AUTH_USER_MODEL = 'users.User'
 ```
@@ -687,7 +687,7 @@ python manage.py migrate
 ```
 
 ## setup redis
-1. Main/settigs.py
+1. api/settigs.py
 ```python
 INSTALLED_APPS = [
     # ...
@@ -734,7 +734,7 @@ redis-server --dbfilename dump.rdb --dir . --daemonize yes
 ```
 
 ##  setup celery
-1. Main/settigs.py
+1. api/settigs.py
 ```python
 INSTALLED_APPS = [
     # ...
@@ -754,7 +754,7 @@ CELERY_TASK_SERIALIZER = 'json'
 CELERY_ENABLE_UTC = True
 CELERY_BEAT_SCHEDULE = {}
 ```
-2. Main/__init__.py
+2. api/__init__.py
 ```python
 # This will make sure the app is always imported when
 # Django starts so that shared_task will use this app.
@@ -762,16 +762,16 @@ from .celery import app as celery_app
 
 __all__ = ('celery_app',)
 ```
-3. Main/tasks.py
+3. api/tasks.py
 ```python
 import os
 
 from celery import Celery
 
 # Set the default Django settings module for the 'celery' program.
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'Main.settings')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'api.settings')
 
-app = Celery('Main')
+app = Celery('api')
 
 # Using a string here means the worker doesn't have to serialize
 # the configuration object to child processes.
@@ -789,18 +789,18 @@ def debug_task(self):
 4. run celery
 ```bash
 # macos
-celery  -A Main worker --loglevel=INFO --concurrency=2 -B -s celerybeat-schedule
+celery  -A api worker --loglevel=INFO --concurrency=2 -B -s celerybeat-schedule
 ```
 ```bash
 # linux
-celery -A Main worker -l INFO --concurrency=2 -B -s celerybeat-schedule
+celery -A api worker -l INFO --concurrency=2 -B -s celerybeat-schedule
 ```
 
 ## [setup logging](https://docs.djangoproject.com/en/4.1/topics/logging/)
 1. Add logs
 ```bash
-mkdir backend/Main/logs
-touch backend/Main/logs/.gitkeep
+mkdir backend/api/logs
+touch backend/api/logs/.gitkeep
 ```
 2. runserver
 ```bash
@@ -810,8 +810,8 @@ python manage.py runserver
 ```bash
 # ...
 # logs
-Main/logs/celery.log
-Main/logs/Main.log
+api/logs/celery.log
+api/logs/api.log
 ```
 
 ## setup debug & profiling
@@ -833,7 +833,7 @@ os.system('mprof run adlynx-backend/manage.py runserver 127.0.0.1:8000')
 ```
 
 ### querylog
-Main/setting.py
+api/setting.py
 ```python
 LOGGING = {
     'version': 1,
@@ -863,7 +863,7 @@ LOGGING = {
 ```bash
 pip3 install django-querycount
 ```
-Main/setting.py
+api/setting.py
 ```python
 MIDDLEWARE = [
     # ...

@@ -1,7 +1,7 @@
 from rest_framework import status
 
 from cards.models import Tag
-from tests.cards.base import BaseCardsTest
+from api.tests.cards.base import BaseCardsTest
 
 
 class TestGetTagView(BaseCardsTest):

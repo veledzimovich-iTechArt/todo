@@ -2,7 +2,7 @@
 from django.test import TestCase
 from django.db.utils import IntegrityError
 
-from tests.cards.factories import TagFactory
+from api.tests.cards.factories import TagFactory
 
 
 class TestTagModel(TestCase):
