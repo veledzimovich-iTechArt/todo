@@ -1,6 +1,6 @@
 from rest_framework import status
 
-from tests.users.base import BaseUserTest
+from api.tests.users.base import BaseUserTest
 
 
 class TestLoginView(BaseUserTest):

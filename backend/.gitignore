@@ -5,5 +5,5 @@ __pycache__/
 .env
 requirements-dev.txt
 # logs
-Main/logs/celery.log
-Main/logs/Main.log
+api/logs/celery.log
+api/logs/api.log

@@ -2,8 +2,7 @@
 from rest_framework.reverse import reverse_lazy
 from rest_framework.test import APITestCase
 
-
-from tests.users.factories import UserFactory
+from api.tests.users.factories import UserFactory
 
 
 class BaseUserTest(APITestCase):

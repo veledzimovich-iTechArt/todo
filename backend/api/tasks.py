@@ -8,10 +8,10 @@ from celery import Celery, current_app, shared_task
 from django.core.cache import cache
 
 # set the default Django settings module for the 'celery' program.
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'Main.settings')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'api.settings')
 
-logger = logging.getLogger('Main')
-app = Celery('Main')
+logger = logging.getLogger('api')
+app = Celery('api')
 
 # Using a string here means the worker doesn't have to serialize
 # the configuration object to child processes.
