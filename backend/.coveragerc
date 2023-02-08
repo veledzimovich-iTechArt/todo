@@ -1,0 +1,2 @@
+[run]
+omit = api/tests/*,api/asgi.py,api/wsgi.py,manage.py,*/migrations/*

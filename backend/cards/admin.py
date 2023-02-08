@@ -27,9 +27,7 @@ class TagAdmin(admin.ModelAdmin):
     readonly_fields = ('get_todos',)
 
     def get_queryset(self, request: Request) -> QuerySet:
-        queryset = super().get_queryset(request)
-        queryset = queryset.prefetch_related('todo_set')
-        return queryset
+        return super().get_queryset(request).prefetch_related('tags')
 
     def get_todos(self, value: Tag) -> str:
         lst = [t.title for t in value.todo_set.all()]
