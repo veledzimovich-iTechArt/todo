@@ -16,4 +16,4 @@ class TagFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Tag
 
-    title = factory.Faker('sentence', nb_words=2)
+    title = factory.Sequence(lambda n: f'tag {n}')
