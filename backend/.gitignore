@@ -4,6 +4,7 @@ __pycache__/
 .DS_Store
 .env
 requirements-dev.txt
+.coveragerc
 # logs
 api/logs/celery.log
 api/logs/api.log

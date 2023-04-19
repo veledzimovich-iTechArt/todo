@@ -19,6 +19,7 @@
 - [measure coverage](#measure-coverage)
 - [test exception](#test-exception)
 - [reproducible random values with factory-boy](#reproducible-random-values-with-factory-boy)
+- [unique values with factory-boy](#unique-values-with-factory-boy)
 - [set database extension for case-insensitive](#set-database-extension-for-case-insensitive)
 - [check migration](#check-migration)
 - [dump fixtures](#dump-fixtures)
@@ -407,6 +408,10 @@ touch backend/.coveragerc
 ```bash
 [run]
 omit = api/tests/*,api/asgi.py,api/wsgi.py,manage.py,*/migrations/*
+[report]
+ exclude_lines=
+     pragma: no cover
+     if TYPE_CHECKING:
 ```
 3. backend/pytest.ini
 ``` ini
@@ -458,6 +463,11 @@ import factory.random
 
 def setup_test_environment():
     factory.random.reseed_random('my_awesome_project')
+```
+
+## unique values with factory-boy
+```python
+name = factory.Sequence(lambda n: f'Company {n}')
 ```
 
 ## set database extension for case-insensitive
