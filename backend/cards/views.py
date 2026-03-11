@@ -21,11 +21,12 @@ from cards.permissions import IsOwnerOrAdminReadOnly
 
 class TodoView(viewsets.ModelViewSet):
     serializer_class = TodoSerializer
+    queryset = Todo.objects.all()
     permission_classes = [
         # for list
         permissions.IsAuthenticatedOrReadOnly,
         # for object allows to edit only for the owner
-        IsOwnerOrAdminReadOnly,
+        IsOwnerOrAdminReadOnly
     ]
 
     def get_queryset(self) -> QuerySet:

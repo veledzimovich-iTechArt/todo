@@ -1,9 +1,6 @@
-# sourcery skip: snake-case-functions
 from django.test import TestCase
 
 from api.tests.cards.factories import TodoFactory
-
-# Create your tests here.
 
 
 class TestTodoModel(TestCase):
@@ -17,3 +14,6 @@ class TestTodoModel(TestCase):
 
     def test_get_default_incompleted(self) -> None:
         self.assertEqual(self.todo.completed, False)
+
+    def test_get_title(self) -> None:
+        self.assertEqual(str(self.todo), self.todo.title)
