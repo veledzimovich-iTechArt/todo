@@ -1,4 +1,3 @@
-# sourcery skip: snake-case-functions
 from rest_framework.reverse import reverse_lazy
 from rest_framework.test import APITestCase
 

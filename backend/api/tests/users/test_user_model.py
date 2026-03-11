@@ -1,9 +1,6 @@
-# sourcery skip: snake-case-functions
 from django.test import TestCase
 
 from api.tests.users.factories import UserFactory
-
-# Create your tests here.
 
 
 class TestUserModel(TestCase):

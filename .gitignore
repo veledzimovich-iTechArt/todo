@@ -3,7 +3,6 @@
 .mypy_cache/
 .pytest_cache/
 .coverage
-.sourcery.yaml
 .vscode
 .flake8
 celerybeat-schedule.db
