@@ -8,6 +8,8 @@
 
 [Run tests](#run-tests)
 
+[Django Admin](#django-admin)
+
 [Initial Django setup](#initial-django-setup)
 
 [HOW TO](#how-to)
@@ -53,6 +55,11 @@ docker compose up
 docker exec todo_api coverage run --source='.' -m pytest .
 ```
 
+# Django Admin (optional)
+```bash
+# http://localhost:8000/admin
+docker compose exec api python manage.py changepassword admin
+```
 
 # Initial Django setup
 

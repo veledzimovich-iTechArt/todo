@@ -18,6 +18,7 @@ from django.contrib import admin
 from django.urls import path, include
 from rest_framework import routers
 from cards import views
+from django.conf.urls.static import static
 
 # CRUD router
 router = routers.DefaultRouter()
@@ -35,3 +36,6 @@ if settings.DEBUG:
     urlpatterns += [
         path('__debug__/', include('debug_toolbar.urls'))
     ]
+    urlpatterns += static(
+        settings.STATIC_URL, document_root=settings.STATIC_ROOT
+    )
