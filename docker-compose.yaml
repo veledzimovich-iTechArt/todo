@@ -1,7 +1,7 @@
 services:
   db:
     container_name: todo_db
-    image: postgres:15
+    image: postgres:15-alpine
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
@@ -16,10 +16,12 @@ services:
         interval: 5s
         timeout: 5s
         retries: 5
+    networks:
+      - todo-network
 
   redis:
     container_name: todo_redis
-    image: redis:latest
+    image: redis:7-alpine
     ports:
       - "16379:6379"
     # wait for redis
@@ -28,6 +30,8 @@ services:
         interval: 5s
         timeout: 5s
         retries: 5
+    networks:
+      - todo-network
 
   api:
     container_name: todo_api
@@ -60,12 +64,15 @@ services:
     links:
       - db
       - redis
+    networks:
+      - todo-network
 
   celery:
     container_name: todo_celery
     restart: always
     build:
       context: ./backend
+    # -A refers to your Django project/module where celery.py is defined.
     command: celery -A api worker -l INFO --concurrency=2 -B -s celerybeat-schedule
     env_file:
       - ./backend/.env
@@ -76,6 +83,8 @@ services:
       - db
       - redis
       - api
+    networks:
+      - todo-network
 
   web:
     container_name: todo_web
@@ -96,4 +105,9 @@ services:
       - redis
       - api
       - celery
+    networks:
+      - todo-network
 
+networks:
+  todo-network:
+    driver: bridge

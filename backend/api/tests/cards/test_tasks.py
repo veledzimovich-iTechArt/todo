@@ -36,7 +36,7 @@ class TestCardsTask(TestCase):
         self.assertEqual(info_info.call_count, 1)
         info_info.assert_called_with('Waiting for notification')
         self.assertEqual(warning_warning.call_count, 1)
-        warning_warning.assert_called_with('Execute')
+        warning_warning.assert_called_with('Notify users')
         self.assertEqual(info_warning.call_count, 1)
         info_warning.assert_called_with('Done')
 

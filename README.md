@@ -8,7 +8,7 @@
 
 [Run tests](#run-tests)
 
-[Django Admin](#django-admin)
+[Django Admin](#django-admin-optional)
 
 [Initial Django setup](#initial-django-setup)
 
@@ -38,6 +38,7 @@
 
 [Intial Docker setup](#intial-docker-setup)
 
+[Deploy AWS](#deploy-aws)
 
 # Run app
 ```bash
@@ -58,7 +59,7 @@ docker exec todo_api coverage run --source='.' -m pytest .
 # Django Admin (optional)
 ```bash
 # http://localhost:8000/admin
-docker compose exec api python manage.py changepassword admin
+docker compose exec todo_api python manage.py changepassword admin
 ```
 
 # Initial Django setup
@@ -124,7 +125,7 @@ load_dotenv()
 SECRET_KEY = os.environ.get('SECRET_KEY')
 DEBUG = bool(os.environ.get('DEBUG'))
 # this is the host that Docker uses to run application
-ALLOWED_HOSTS = ['localhost', '0.0.0.0', 'api']
+ALLOWED_HOSTS = ['localhost', '0.0.0.0', 'api', '16.16.217.216']
 
 AUTH_USER_MODEL = 'users.User'
 PROJECT_APPS = [
@@ -144,11 +145,11 @@ MIDDLEWARE = [
 ]
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:3000',
-    'http://0.0.0.0:3000',
+    'http://0.0.0.0:80',
 ]
 CSRF_TRUSTED_ORIGINS = [
     'http://localhost:3000',
-    'http://0.0.0.0:3000',
+    'http://0.0.0.0:80',
 ]
 DATABASES = {
     'default': {
@@ -1107,3 +1108,708 @@ docker-compose up
 ## Check docker-compose.yaml
 ## [Optimize containers](https://medium.com/nerd-for-tech/bigger-dockerignore-smaller-docker-images-49fa22e51c7)
 
+
+
+# Deploy AWS
+
+## Step 1: Create ECR Repositories
+
+We will store the Docker images for frontend and backend in ECR.
+
+1. **Create ECR repository for frontend:**
+   ```bash
+   aws ecr create-repository \
+     --repository-name todo-frontend \
+     --region eu-north-1 \
+     --profile vention
+   ```
+
+2. **Create ECR repository for backend:**
+   ```bash
+   aws ecr create-repository \
+     --repository-name todo-backend \
+     --region eu-north-1 \
+     --profile vention
+   ```
+
+3. **Login Docker to ECR (from your local machine):**
+   ```bash
+   aws ecr get-login-password --region eu-north-1 --profile vention | \
+     docker login --username AWS --password-stdin \
+     $(aws sts get-caller-identity --query Account --output text --profile vention).dkr.ecr.eu-north-1.amazonaws.com
+   ```
+
+4. **Note the ECR repository URIs:**
+   ```bash
+   aws ecr describe-repositories \
+     --region eu-north-1 \
+     --profile vention \
+     --query 'repositories[*].repositoryUri'
+   ```
+
+### ECR Repository URIs:
+- "193542828389.dkr.ecr.eu-north-1.amazonaws.com/todo-frontend"
+- "193542828389.dkr.ecr.eu-north-1.amazonaws.com/todo-backend"
+---
+
+## Step 2: Build and Push Docker Images (Frontend & Backend)
+
+We build images locally and push them to ECR. We build images locally and push them to ECR.
+Later, we will run them on EC2.
+
+**Architecture note:** t3.micro instances is `linux/amd64`
+
+1. **Get your AWS account ID and set ECR base:**
+   ```bash
+   export AWS_REGION=eu-north-1
+   export AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text --profile vention)
+   export ECR_BASE="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+   ```
+
+2. **Build and push frontend image:**
+   ```bash
+   cd frontend
+   docker build --platform linux/amd64 -t todo-frontend .
+   docker tag todo-frontend:latest ${ECR_BASE}/todo-frontend:latest
+   docker push ${ECR_BASE}/todo-frontend:latest
+   cd ..
+   ```
+
+3. **Build and push backend image:**
+   ```bash
+   cd backend
+   docker build --platform linux/amd64 -t todo-backend .
+   docker tag todo-backend:latest ${ECR_BASE}/todo-backend:latest
+   docker push ${ECR_BASE}/todo-backend:latest
+   cd ..
+   ```
+
+---
+
+## Step 3: Create VPC and Networking
+
+Below are CLI commands for a minimal VPC setup
+
+1. **Create VPC:**
+   ```bash
+   aws ec2 create-vpc \
+     --cidr-block 10.0.0.0/16 \
+     --region eu-north-1 \
+     --profile vention \
+     --tag-specifications 'ResourceType=vpc,Tags=[{Key=Name,Value=todo-vpc-free}]'
+   ```
+
+   Note the VPC ID and export it:
+   ```bash
+   export VPC_ID=vpc-0c3350b63d2dbb005
+   ```
+
+2. **Create Internet Gateway and attach to VPC:**
+   ```bash
+   aws ec2 create-internet-gateway \
+     --region eu-north-1 \
+     --profile vention \
+     --tag-specifications 'ResourceType=internet-gateway,Tags=[{Key=Name,Value=todo-igw-free}]'
+   ```
+
+   Note the Internet Gateway ID:
+   ```bash
+   export IGW_ID=igw-03955857a46516bcd
+   ```
+
+   Attach:
+   ```bash
+   aws ec2 attach-internet-gateway \
+     --internet-gateway-id ${IGW_ID} \
+     --vpc-id ${VPC_ID} \
+     --region eu-north-1 \
+     --profile vention
+   ```
+
+3. **Create public subnet:**
+   ```bash
+   # Public Subnet 1 in eu-north-1a
+   aws ec2 create-subnet \
+     --vpc-id ${VPC_ID} \
+     --cidr-block 10.0.1.0/24 \
+     --availability-zone eu-north-1a \
+     --region eu-north-1 \
+     --profile vention \
+     --tag-specifications 'ResourceType=subnet,Tags=[{Key=Name,Value=todo-public-subnet-1a-free}]'
+
+   # Public Subnet 2 in eu-north-1b
+   aws ec2 create-subnet \
+     --vpc-id ${VPC_ID} \
+     --cidr-block 10.0.2.0/24 \
+     --availability-zone eu-north-1b \
+     --region eu-north-1 \
+     --profile vention \
+     --tag-specifications 'ResourceType=subnet,Tags=[{Key=Name,Value=todo-public-subnet-1b-free}]'
+   ```
+
+   Note the subnet IDs:
+   ```bash
+   export PUBLIC_SUBNET_1_ID=subnet-0ca52ff27c6af369e
+   export PUBLIC_SUBNET_2_ID=subnet-0f9dd5215859e6fa9
+   ```
+
+4. **Enable auto‑assign public IP for both public subnets:**
+   ```bash
+   aws ec2 modify-subnet-attribute \
+     --subnet-id ${PUBLIC_SUBNET_1_ID} \
+     --map-public-ip-on-launch \
+     --region eu-north-1 \
+     --profile vention
+
+   aws ec2 modify-subnet-attribute \
+     --subnet-id ${PUBLIC_SUBNET_2_ID} \
+     --map-public-ip-on-launch \
+     --region eu-north-1 \
+     --profile vention
+   ```
+
+5. **Create a public route table and route to Internet Gateway:**
+   ```bash
+   aws ec2 create-route-table \
+     --vpc-id ${VPC_ID} \
+     --region eu-north-1 \
+     --profile vention \
+     --tag-specifications 'ResourceType=route-table,Tags=[{Key=Name,Value=todo-public-rt-free}]'
+   ```
+
+   Note the route table ID:
+   ```bash
+   export PUBLIC_RT_ID=rtb-0eae2e631179047ed
+   ```
+
+   Add default route:
+   ```bash
+   aws ec2 create-route \
+     --route-table-id ${PUBLIC_RT_ID} \
+     --destination-cidr-block 0.0.0.0/0 \
+     --gateway-id ${IGW_ID} \
+     --region eu-north-1 \
+     --profile vention
+   ```
+
+6. **Associate both public subnets with the public route table:**
+   ```bash
+   aws ec2 associate-route-table \
+     --subnet-id ${PUBLIC_SUBNET_1_ID} \
+     --route-table-id ${PUBLIC_RT_ID} \
+     --region eu-north-1 \
+     --profile vention
+
+   aws ec2 associate-route-table \
+     --subnet-id ${PUBLIC_SUBNET_2_ID} \
+     --route-table-id ${PUBLIC_RT_ID} \
+     --region eu-north-1 \
+     --profile vention
+   ```
+
+**Summary:**
+- ✅ 1 VPC
+- ✅ 2 public subnets (one in each AZ)
+- ✅ Internet Gateway
+- ✅ Route table with `0.0.0.0/0` → IGW
+
+                    Internet
+                       |
+                Internet Gateway
+                       |
+                      VPC
+                 10.0.0.0/16
+                       |
+         --------------------------------
+         |                              |
+   Public Subnet                    Public Subnet
+     10.0.1.0/24                     10.0.2.0/24
+   eu-north-1a                     eu-north-1b
+         |                              |
+     Servers                         Servers
+   (public IP)                     (public IP)
+
+---
+
+## Step 4: Create Security Group for EC2 Instance
+
+The EC2 instance will host both frontend and backend containers.
+We need a security group to allow HTTP (and optional SSH) access.
+
+1. **Create security group:**
+   ```bash
+   aws ec2 create-security-group \
+     --group-name todo-ec2-sg \
+     --description "Security group for todo EC2 instance" \
+     --vpc-id ${VPC_ID} \
+     --region eu-north-1 \
+     --profile vention
+   ```
+
+   Note the security group ID:
+   ```bash
+   export EC2_SG_ID=sg-053d2ea483aaa4450
+   ```
+
+2. **Allow HTTP from anywhere (port 80):**
+   ```bash
+   aws ec2 authorize-security-group-ingress \
+     --group-id ${EC2_SG_ID} \
+     --protocol tcp \
+     --port 80 \
+     --cidr 0.0.0.0/0 \
+     --region eu-north-1 \
+     --profile vention
+   ```
+
+3. **(Optional but recommended) Allow SSH only from your IP:**
+   ```bash
+   MY_IP=$(curl -s https://checkip.amazonaws.com)/32
+
+   aws ec2 authorize-security-group-ingress \
+     --group-id ${EC2_SG_ID} \
+     --protocol tcp \
+     --port 22 \
+     --cidr ${MY_IP} \
+     --region eu-north-1 \
+     --profile vention
+   ```
+
+User browser
+      |
+Internet
+      |
+Security Group (Firewall)
+      |
+EC2 Server
+
+Port 80 → allowed
+Port 22 → allowed only from your IP
+Other ports → blocked
+
+---
+
+## Step 5: Create IAM Role for EC2
+
+1. **Create trust policy file for EC2:**
+   ```bash
+   cat > ec2-instance-trust-policy.json <<EOF
+   {
+     "Version": "2012-10-17",
+     "Statement": [
+       {
+         "Effect": "Allow",
+         "Principal": {
+           "Service": "ec2.amazonaws.com"
+         },
+         "Action": "sts:AssumeRole"
+       }
+     ]
+   }
+   EOF
+   ```
+
+2. **Create the EC2 role:**
+   ```bash
+   aws iam create-role \
+     --role-name todo-ec2-role \
+     --assume-role-policy-document file://ec2-instance-trust-policy.json \
+     --profile vention
+   ```
+
+3. **Attach ECR access policy:**
+
+   # Allow the EC2 instance role to authenticate to ECR and pull images
+   aws iam attach-role-policy \
+     --role-name todo-ec2-role \
+     --policy-arn arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly \
+     --profile vention
+   ```
+
+4. **Create instance profile and attach the role:**
+   ```bash
+   aws iam create-instance-profile \
+     --instance-profile-name todo-ec2-instance-profile \
+     --profile vention
+
+   aws iam add-role-to-instance-profile \
+     --instance-profile-name todo-ec2-instance-profile \
+     --role-name todo-ec2-role \
+     --profile vention
+   ```
+
+EC2 Instance
+     │
+     ▼
+Instance Profile
+     │
+     ▼
+IAM Role (todo-ec2-role)
+     │
+     ▼
+Permission: Read from ECR
+
+---
+
+## Step 6: Create Key Pair and Launch EC2 Instance
+
+1. Create a key pair (if you don’t have one)
+
+    ```bash
+    aws ec2 create-key-pair \
+    --key-name todo-key \
+    --query 'KeyMaterial' \
+    --output text > todo-key.pem \
+    --region eu-north-1 \
+    --profile vention
+
+    chmod 400 todo-key.pem
+    ```
+
+2. Find a free AMI (Amazon Machine Images)
+
+    - In the AWS Console, go to **EC2 → AMIs** and pick:
+    - Owner: **Amazon**
+    - Architecture: **x86_64**
+    - Type: **Amazon Linux 2** or **Amazon Linux 2023**
+
+    Note the AMI ID (e.g., `ami-xxxxxxxxxxxxxxxxx`).
+
+    ```bash
+    export AMI_ID=ami-0aaa636894689fa47
+    ```
+
+3. Launch the EC2 instance t3.micro
+
+    ```bash
+    aws ec2 run-instances \
+    --image-id ${AMI_ID} \
+    --instance-type t3.micro \
+    --key-name todo-key \
+    --security-group-ids ${EC2_SG_ID} \
+    --subnet-id ${PUBLIC_SUBNET_1_ID} \
+    --associate-public-ip-address \
+    --iam-instance-profile Name=todo-ec2-instance-profile \
+    --count 1 \
+    --region eu-north-1 \
+    --profile vention
+    ```
+
+    Note the Instance ID once the instance is running.
+
+    ```bash
+    export INSTANCE_ID=i-0e0febf69a65d9a09
+    ```
+
+    ```bash
+    aws ec2 describe-instances \
+    --instance-ids ${INSTANCE_ID} \
+    --region eu-north-1 \
+    --profile vention \
+    --query 'Reservations[0].Instances[0].[PublicIpAddress,PublicDnsName]' \
+    --output text
+    ```
+
+    Note the Public IP
+
+    ```bash
+    # Check ALLOWED_HOSTS in Django
+    export PUBLIC_IP=16.16.217.216
+    ```
+
+    **Free tier note:** t3.micro should be free (750 hours/month for the first 12 months of a new account).
+
+
+## Step 7: SSH into EC2 and Install Docker
+
+1. **SSH into the instance:**
+   ```bash
+   ssh -i todo-key.pem ec2-user@${PUBLIC_IP}
+   ssh -i ./todo-key.pem -o IdentitiesOnly=yes ec2-user${PUBLIC_IP} -v
+   ```
+
+   ```bash
+   # check connection (optional)
+   nc -vz ${PUBLIC_IP} 22
+   ```
+
+2. **Install Docker (Amazon Linux 2 example):**
+   ```bash
+   sudo yum update -y
+   sudo amazon-linux-extras install docker -y || sudo yum install docker -y
+   sudo service docker start
+   sudo usermod -aG docker ec2-user
+   ```
+
+3. **(Optional) Log out and back in** so your user picks up the `docker` group membership:
+   ```bash
+   exit
+   ssh -i todo-key.pem ec2-user@${PUBLIC_IP}
+   ```
+
+
+4. **Verify Docker:**
+   ```bash
+   docker ps
+   ```
+
+
+## Step 8: Pull Images from ECR and Run Containers
+
+On the EC2 instance, we will:
+- Authenticate Docker to ECR
+- Pull the frontend and backend images
+- Create a Docker network
+- Run all containers on the same instance
+
+1. **Set region on EC2** (AWS CLI and SDKs will automatically use the EC2 instance role created in Step 5):
+   ```bash
+   export AWS_REGION=eu-north-1
+   ```
+
+2. **Get account ID and ECR base on EC2 (using the instance role):**
+   ```bash
+   export AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+   export ECR_BASE="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+   ```
+
+3. **Login Docker to ECR (from EC2):**
+   ```bash
+   aws ecr get-login-password --region ${AWS_REGION} | \
+     docker login --username AWS --password-stdin \
+     ${ECR_BASE}
+   ```
+
+4. **Pull images:**
+   ```bash
+   docker pull ${ECR_BASE}/todo-frontend:latest
+   docker pull ${ECR_BASE}/todo-backend:latest
+   ```
+
+5. **Create Docker network (to mirror `docker-compose.yml`):**
+   ```bash
+   docker network create todo-network || true
+   ```
+
+6. **Run Postgres**
+
+    Same AMI as backend
+
+    ```bash
+    docker run -d \
+    --name todo_db \
+    --network todo-network \
+    -e POSTGRES_USER=postgres \
+    -e POSTGRES_PASSWORD=postgres \
+    -e POSTGRES_DB=todo \
+    -v todo_postgres_data:/var/lib/postgresql/data \
+    postgres:15-alpine
+    ```
+
+    AWS RDS
+
+    Create RDS withoit connetcion to EC2
+
+    ```bash
+    export RDS=todo.cxsmy20q6rs4.eu-north-1.rds.amazonaws.com
+    ```
+
+    Create connections with security group
+
+    ```bash
+    # Create Postgres container
+    docker run -d \
+    --name todo_postgres \
+    -e POSTGRES_USER=postgres \
+    -e POSTGRES_PASSWORD=postgres \
+    postgres:15-alpine
+    # Exists
+    docker exec -it todo_postgres sh
+    ```
+    ```bash
+    apk add --no-cache bind-tools
+    nslookup ${RDS}
+    ping -c 3 ${RDS}
+
+    # Check if RDS is accessible
+    apk add --no-cache busybox-extras
+    nc -zv ${RDS} 5432
+
+    ```
+
+
+7. **Run Redis**
+    ```bash
+    docker run -d \
+    --name todo_redis \
+    --network todo-network \
+    redis:7-alpine
+    ```
+7. **Run backend containers:**
+
+    Same AMI as backend
+
+    ```bash
+    docker run -d \
+    --name todo_api \
+    --network todo-network \
+    -e SECRET_KEY='django-insecure-o_x)+$!uv!wu3^lhr^fr0h#osdp#4pe%cojq!io@t$11-u^xt8' \
+    -e DEBUG=False \
+    -e DATABASE_NAME=todo \
+    -e DATABASE_USER=postgres \
+    -e DATABASE_PASSWORD=postgres \
+    -e DATABASE_HOST=todo_db \
+    -e DATABASE_PORT=5432 \
+    -e DATABASE_CONN_MAX_AGE=600 \
+    -e REDIS_HOST=todo_redis \
+    -p 8000:8000 \
+    ${ECR_BASE}/todo-backend:latest \
+    bash -c "python manage.py migrate && \
+        python manage.py collectstatic --noinput && \
+        python manage.py load_all_data && \
+        python manage.py runserver 0.0.0.0:8000"
+    ```
+
+    ```bash
+    docker run -d \
+    --name todo_celery \
+    --network todo-network \
+    -e SECRET_KEY='django-insecure-o_x)+$!uv!wu3^lhr^fr0h#osdp#4pe%cojq!io@t$11-u^xt8' \
+    -e DEBUG=False \
+    -e DATABASE_NAME=todo \
+    -e DATABASE_USER=postgres \
+    -e DATABASE_PASSWORD=postgres \
+    -e DATABASE_HOST=todo_db \
+    -e DATABASE_PORT=5432 \
+    -e DATABASE_CONN_MAX_AGE=600 \
+    -e REDIS_HOST=todo_redis \
+    ${ECR_BASE}/todo-backend:latest \
+    celery -A api worker -l INFO --concurrency=2 -B -s celerybeat-schedule
+    ```
+
+    AWS RDS
+
+    ```bash
+    docker run -d \
+    --name todo_api \
+    --network todo-network \
+    -e SECRET_KEY='django-insecure-o_x)+$!uv!wu3^lhr^fr0h#osdp#4pe%cojq!io@t$11-u^xt8' \
+    -e DEBUG=False \
+    -e DATABASE_NAME=todo \
+    -e DATABASE_USER=postgres \
+    -e DATABASE_PASSWORD=postgres\
+    -e DATABASE_HOST=todo.cxsmy20q6rs4.eu-north-1.rds.amazonaws.com \
+    -e DATABASE_PORT=5432 \
+    -e DATABASE_CONN_MAX_AGE=600 \
+    -e REDIS_HOST=todo_redis \
+    -p 8000:8000 \
+    ${ECR_BASE}/todo-backend:latest \
+    bash -c "python manage.py migrate && \
+        python manage.py collectstatic --noinput && \
+        python manage.py load_all_data && \
+        python manage.py runserver 0.0.0.0:8000"
+    ```
+
+    ```bash
+    docker run -d \
+    --name todo_celery \
+    --network todo-network \
+    -e SECRET_KEY='django-insecure-o_x)+$!uv!wu3^lhr^fr0h#osdp#4pe%cojq!io@t$11-u^xt8' \
+    -e DEBUG=False \
+    -e DATABASE_NAME=todo \
+    -e DATABASE_USER=postgres \
+    -e DATABASE_PASSWORD=postgres \
+    -e DATABASE_HOST=todo.cxsmy20q6rs4.eu-north-1.rds.amazonaws.com \
+    -e DATABASE_PORT=5432 \
+    -e DATABASE_CONN_MAX_AGE=600 \
+    -e REDIS_HOST=todo_redis \
+    ${ECR_BASE}/todo-backend:latest \
+    celery -A api worker -l INFO --concurrency=2 -B -s celerybeat-schedule
+    ```
+
+    # Dump DB
+    ```bash
+    pg_dump \
+    -h todo.cxsmy20q6rs4.eu-north-1.rds.amazonaws.com \
+    -U postgres \
+    -d todo \
+    -F c \
+    -f todo_aws.dump
+
+    docker cp todo_postgres:todo_aws.dump ~/todo_aws.dump
+    ```
+    # Copy to local machine
+    ```bash
+    scp -i todo-key.pem ec2-user@${PUBLIC_IP}:~/todo_aws.dump .
+    ```
+
+   The backend will automatically use the **EC2 instance role** (`todo-ec2-role`) for AWS credentials (thanks to the IAM setup in Step 5).
+
+8. **Run frontend container (Nginx):**
+    ```bash
+    docker run -d \
+        --name todo_web \
+        --network todo-network \
+        -p 80:80 \
+        ${ECR_BASE}/todo-frontend:latest
+    ```
+    ```bash
+    # check ports
+    docker exec -it todo_web netstat -tulpn
+    ```
+
+   The frontend container uses Nginx configuration that proxies API calls to the backend container through the Docker network.
+
+9. **Verify containers are running:**
+   ```bash
+   docker ps
+   ```
+
+---
+
+## Step 9: Test Deployment
+
+1. **Get the EC2 public IP** from the AWS Console or via CLI:
+   ```bash
+   aws ec2 describe-instances \
+     --instance-ids ${INSTANCE_ID} \
+     --region eu-north-1 \
+     --profile vention \
+     --query 'Reservations[0].Instances[0].PublicIpAddress' \
+     --output text
+   ```
+
+2. **Access the application in your browser:**
+   - Frontend: `http://16.16.217.216/`
+
+---
+
+## Step 11: Updating the Application (Rebuild & Redeploy)
+
+1. **Rebuild and push images from your local machine** (Step 2).
+2. **SSH into EC2**:
+    ```bash
+    export PUBLIC_IP=16.16.217.216
+    ```
+    ```bash
+    ssh -i todo-key.pem ec2-user@${PUBLIC_IP}
+    ```
+    ```bash
+    docker stop todo_api todo_web todo_db todo_redis todo_celery
+    docker rm todo_api todo_web todo_db todo_redis todo_celery
+    ```
+3. **Update containers** (Step 8)
+
+---
+
+## Step 12: Cleanup
+
+When you no longer need the environment, clean up to avoid any accidental charges:
+
+**Stop and terminate EC2 instance:**
+   ```bash
+   aws ec2 terminate-instances \
+     --instance-ids ${INSTANCE_ID} \
+     --region eu-north-1 \
+     --profile vention
+   ```

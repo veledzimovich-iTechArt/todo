@@ -6,7 +6,8 @@
 .vscode
 .flake8
 celerybeat-schedule.db
-dump.rdb
-local_backup.sql
+todo_aws.dump
+todo_local.sql
 postgres-data/
 venv-django/
+todo-key.pem

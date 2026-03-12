@@ -12,11 +12,10 @@ _logger_warning = logging.getLogger('celery-warning')
 
 @shared_task
 def notify_users() -> None:
-    _logger_warning.warning('Execute')
+    _logger_warning.warning('Notify users')
 
     if datetime.today().day % 2 == 0:
         ids = tuple(User.objects.values_list('id', flat=True))
-        # empty function added in the next release
         TodoUtil.send_notification(ids)
     else:
         _logger_info.info('Waiting for notification')

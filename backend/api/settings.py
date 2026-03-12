@@ -35,7 +35,12 @@ SECRET_KEY = os.environ.get('SECRET_KEY', '12345')
 DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
 
 # this is the host that Docker uses to run application
-ALLOWED_HOSTS = ['localhost', '0.0.0.0', 'api']
+ALLOWED_HOSTS = [
+    'localhost',
+    '0.0.0.0',
+    'api',
+    '16.16.217.216',
+]
 APPEND_SLASH = False
 
 # Application definition
@@ -87,11 +92,11 @@ ROOT_URLCONF = 'api.urls'
 # CORS_ALLOWED_ORIGINS should be list!
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:3000',
-    'http://0.0.0.0:3000',
+    'http://0.0.0.0:80',
 ]
 CSRF_TRUSTED_ORIGINS = [
     'http://localhost:3000',
-    'http://0.0.0.0:3000',
+    'http://0.0.0.0:80',
 ]
 
 TEMPLATES = [
@@ -237,7 +242,7 @@ CELERY_BEAT_SCHEDULE = {
     'remove_unused_tags': {
         'task': 'cards.tasks.remove_unused_tags',
         # 'schedule': crontab(hour=7, day_of_week=1)
-        'schedule': crontab(minute='*/30')
+        'schedule': crontab(minute='*/10')
     },
 }
 
