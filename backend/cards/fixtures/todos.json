@@ -209,7 +209,7 @@
             "owner": 1,
             "title": "Add Notification in Django",
             "description": "Set Redis and Celery to send notifications about recently completed tasks",
-            "completed": false,
+            "completed": true,
             "tags": [
                 1,
                 4

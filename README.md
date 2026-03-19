@@ -111,7 +111,7 @@ DATABASE_PORT=5432
 DATABASE_CONN_MAX_AGE=600
 
 # REDIS
-REDIS_HOST='127.0.0.1'
+REDIS_HOST=127.0.0.1
 ```
 
 1. api/settings.py
@@ -1786,7 +1786,7 @@ On the EC2 instance, we will:
 
 ## Step 11: Updating the Application (Rebuild & Redeploy)
 
-1. **Rebuild and push images from your local machine** (Step 2).
+1. **Rebuild and push images from your local machine** (Strp 1 + Step 2).
 2. **SSH into EC2**:
     ```bash
     export PUBLIC_IP=16.16.217.216
@@ -1795,8 +1795,8 @@ On the EC2 instance, we will:
     ssh -i todo-key.pem ec2-user@${PUBLIC_IP}
     ```
     ```bash
-    docker stop todo_api todo_web todo_db todo_redis todo_celery
-    docker rm todo_api todo_web todo_db todo_redis todo_celery
+    docker stop todo_api todo_celery todo_web todo_db todo_redis
+    docker rm todo_api todo_celery todo_web todo_db todo_redis
     ```
 3. **Update containers** (Step 8)
 
