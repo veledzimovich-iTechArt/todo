@@ -14,14 +14,14 @@ class TestLoginView(BaseUserTest):
     def test_login_user_accepted(self) -> None:
         response = self.post_request(self.login_url, self.user.username, self.password)
         self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
-        self.assertEqual(response.data['id'], self.user.id)
-        self.assertEqual(response.data['username'], self.user.username)
+        self.assertEqual(response.data['results']['id'], self.user.id)
+        self.assertEqual(response.data['results']['username'], self.user.username)
 
     def test_login_another_user_accepted(self) -> None:
         response = self.post_request(self.login_url, self.user.username, self.password)
         self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
-        self.assertEqual(response.data['id'], self.user.id)
-        self.assertEqual(response.data['username'], self.user.username)
+        self.assertEqual(response.data['results']['id'], self.user.id)
+        self.assertEqual(response.data['results']['username'], self.user.username)
 
         self.assertEqual(response.wsgi_request.user.id, self.user.id)
 
@@ -29,8 +29,8 @@ class TestLoginView(BaseUserTest):
             self.login_url, self.other_user.username, self.other_password
         )
         self.assertEqual(other_resp.status_code, status.HTTP_202_ACCEPTED)
-        self.assertEqual(other_resp.data['id'], self.other_user.id)
-        self.assertEqual(other_resp.data['username'], self.other_user.username)
+        self.assertEqual(other_resp.data['results']['id'], self.other_user.id)
+        self.assertEqual(other_resp.data['results']['username'], self.other_user.username)
         values = self.client.session.values()
         self.assertFalse(self.user.get_session_auth_hash() in values)
         self.assertTrue(self.other_user.get_session_auth_hash() in values)
@@ -42,14 +42,14 @@ class TestLoginView(BaseUserTest):
         response = self.post_request(self.login_url, self.user.username, '12345')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(
-            response.data['non_field_errors'][0], 'Access denied: wrong username or password.'
+            response.data['results']['non_field_errors'][0], 'Access denied: wrong username or password.'
         )
 
     def test_wrong_user_correct_password_bad_request(self) -> None:
         response = self.post_request(self.login_url, self.other_user.username, self.password)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(
-            response.data['non_field_errors'][0], 'Access denied: wrong username or password.'
+            response.data['results']['non_field_errors'][0], 'Access denied: wrong username or password.'
         )
 
     def test_no_user_no_password_serializer_error(self) -> None:
@@ -113,8 +113,8 @@ class TestRegisterView(BaseUserTest):
         )
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         user = User.objects.last()
-        self.assertEqual(response.data['username'], user.username)
-        self.assertEqual(response.data['email'], user.email)
+        self.assertEqual(response.data['results']['username'], user.username)
+        self.assertEqual(response.data['results']['email'], user.email)
 
     def test_register_user_no_username_bad_request(self) -> None:
         data = {**self.data}

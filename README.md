@@ -1608,7 +1608,7 @@ On the EC2 instance, we will:
 
     AWS RDS
 
-    Create RDS withoit connetcion to EC2
+    Create RDS without connection to EC2
 
     ```bash
     export RDS=todo.cxsmy20q6rs4.eu-north-1.rds.amazonaws.com

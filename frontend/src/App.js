@@ -23,7 +23,8 @@ class App extends Component {
         completed: false,
         tags: []
       },
-      errors: {}
+      errors: {},
+      notifications: []
     };
   }
 
@@ -37,14 +38,19 @@ class App extends Component {
     let url = tags ? "/api/todos/?tags=" + tags : "/api/todos/"
     axios
       .get(url)
-      .then((res) => this.setState({ todoList: res.data }))
+      .then((res) => {
+        this.setState({ todoList: res.data.results })
+        if (res.data.notifications && res.data.notifications.length > 0) {
+          this.setState({ notifications: [...this.state.notifications, ...res.data.notifications] });
+        }
+      })
       .catch((err) => console.log(err));
   };
 
   getTags = () => {
     axios
       .get("/api/tags/")
-      .then((res) => this.setState({ allTags: res.data }))
+      .then((res) => this.setState({ allTags: res.data.results }))
       .catch((err) => console.log(err));
   };
 
@@ -155,7 +161,7 @@ class App extends Component {
         err.response.status === 400
         || err.response.status === 403
       ) {
-        this.setState({ errors: { ...err.response.data } });
+        this.setState({ errors: { ...err.response.data.results } });
         this.openModal(type);
       } else if (err.response.status === 500) {
         console.log(err);
@@ -175,7 +181,7 @@ class App extends Component {
     axios
       .post('/api/login/', { "username": username, "password": password })
       .then((res) => {
-        setCookie(document, "loggedUserName", res.data.username);
+        setCookie(document, "loggedUserName", res.data.results.username);
         this.refreshPage();
       })
       .catch((err) => this.handleErrors(err, modalTypes.SignIn));
@@ -188,7 +194,7 @@ class App extends Component {
         "username": username, "password": password, "email": email
       })
       .then((res) => {
-        setCookie(document, "loggedUserName", res.data.username);
+        setCookie(document, "loggedUserName", res.data.results.username);
         this.refreshPage();
       })
       .catch((err) => this.handleErrors(err, modalTypes.SignUp));
@@ -202,6 +208,12 @@ class App extends Component {
         this.refreshPage();
       })
       .catch((err) => console.log(err));
+  };
+
+  dismissNotification = (index) => {
+    const notifications = [...this.state.notifications];
+    notifications.splice(index, 1);
+    this.setState({ notifications });
   };
 
   renderTagList = () => {
@@ -295,6 +307,27 @@ class App extends Component {
     ));
   };
 
+  renderNotifications = () => {
+    if (this.state.notifications.length === 0) return null;
+    return (
+      <div className="alerts-container">
+        {this.state.notifications.map((notif, index) => (
+          <div key={index} className={`alert alert-${notif.level === 40 ? 'warning' : 'info'}`}>
+            {notif.message}
+            <button
+              onClick={() => this.dismissNotification(index)}
+              className="close"
+              aria-label="Close"
+              type="button"
+            >
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
   openModal = (modalType) => {
     this.setState({ openedModalType: modalType });
   };
@@ -344,6 +377,7 @@ class App extends Component {
     }
   };
 
+
   render() {
     let loogedUserName = getCookies(document)['loggedUserName']
     return (
@@ -382,6 +416,7 @@ class App extends Component {
             )
           }
         </div>
+        {loogedUserName && this.renderNotifications()}
         <h2 className="text-secondary text-uppercase text-center my-4">TODO</h2>
         <div className="row">
           <div className="col-md-6 col-sm-10 mx-auto p-0">

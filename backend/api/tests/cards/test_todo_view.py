@@ -14,14 +14,14 @@ class TestGetTodoView(BaseCardsTest):
     def test_get_todos_unauth_user_success(self) -> None:
         response = self.client.get(self.todos_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 0)
+        self.assertEqual(len(response.data['results']), 0)
 
     def test_get_todos_auth_user_success(self) -> None:
         self.client.force_authenticate(self.user)
 
         response = self.client.get(self.todos_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), len(self.todos))
+        self.assertEqual(len(response.data['results']), len(self.todos))
 
     def test_get_todos_auth_admin_success(self) -> None:
         self.user.is_superuser = True
@@ -30,13 +30,13 @@ class TestGetTodoView(BaseCardsTest):
 
         response = self.client.get(self.todos_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), len(self.todos) + 1)
+        self.assertEqual(len(response.data['results']), len(self.todos) + 1)
 
     def test_get_todos_for_specific_owner_success(self) -> None:
         self.client.force_authenticate(self.other_todo.owner)
         response = self.client.get(self.todos_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 1)
+        self.assertEqual(len(response.data['results']), 1)
 
     def test_get_todo_admin_specific_owner_success(self) -> None:
         self.other_todo.owner.is_superuser = True
@@ -45,7 +45,7 @@ class TestGetTodoView(BaseCardsTest):
 
         response = self.client.get(self.todo_detail_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['id'], self.todos[-1].id)
+        self.assertEqual(response.data['results']['id'], self.todos[-1].id)
 
     def test_get_todo_specific_owner_not_found(self) -> None:
         self.client.force_authenticate(self.other_todo.owner)
@@ -58,14 +58,14 @@ class TestGetTodoView(BaseCardsTest):
         self.other_todo.save(update_fields=('completed',))
         self.client.force_authenticate(self.other_todo.owner)
         response = self.client.get(self.todos_url)
-        self.assertTrue(response.data[0]['completed'])
+        self.assertTrue(response.data['results'][0]['completed'])
 
     def test_get_todo_filter_by_tag_success(self) -> None:
         self.client.force_authenticate(self.user)
 
         response = self.client.get(f'{self.todos_url}?tags={self.tags[0].id}')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 2)
+        self.assertEqual(len(response.data['results']), 2)
 
     def test_get_todo_filter_by_two_tag_success(self) -> None:
         self.client.force_authenticate(self.user)
@@ -73,7 +73,7 @@ class TestGetTodoView(BaseCardsTest):
         response = self.client.get(
             f'{self.todos_url}?tags={self.tags[0].id}&tags={self.tags[1].id}')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 3)
+        self.assertEqual(len(response.data['results']), 3)
 
     def test_get_todo_filter_by_wrong_tag_success(self) -> None:
         self.client.force_authenticate(self.user)
@@ -81,7 +81,7 @@ class TestGetTodoView(BaseCardsTest):
         response = self.client.get(
             f'{self.todos_url}?tags=100')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 0)
+        self.assertEqual(len(response.data['results']), 0)
 
 
 class TestPostTodoView(BaseCardsTest):
@@ -96,7 +96,7 @@ class TestPostTodoView(BaseCardsTest):
         response = self.client.post(self.todos_url, data=data, format='json')
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(
-            response.data['detail'], 'Authentication credentials were not provided.'
+            response.data['results']['detail'], 'Authentication credentials were not provided.'
         )
 
     def test_post_todos_auth_user_success(self) -> None:
@@ -110,11 +110,11 @@ class TestPostTodoView(BaseCardsTest):
 
         response = self.client.post(self.todos_url, data=data, format='json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(response.data['title'], DATA['title'])
-        self.assertEqual(response.data['description'], DATA['description'])
-        self.assertFalse(response.data['completed'])
-        self.assertEqual(response.data['owner'], self.user.username)
-        self.assertEqual(len(response.data['tags']), 1)
+        self.assertEqual(response.data['results']['title'], DATA['title'])
+        self.assertEqual(response.data['results']['description'], DATA['description'])
+        self.assertFalse(response.data['results']['completed'])
+        self.assertEqual(response.data['results']['owner'], self.user.username)
+        self.assertEqual(len(response.data['results']['tags']), 1)
 
     def test_post_todo_same_tag_success(self) -> None:
         data = {
@@ -128,11 +128,11 @@ class TestPostTodoView(BaseCardsTest):
 
         response = self.client.post(self.todos_url, data=data, format='json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(response.data['title'], DATA['title'])
-        self.assertEqual(response.data['description'], DATA['description'])
-        self.assertFalse(response.data['completed'])
-        self.assertEqual(response.data['owner'], self.user.username)
-        self.assertEqual(len(response.data['tags']), 1)
+        self.assertEqual(response.data['results']['title'], DATA['title'])
+        self.assertEqual(response.data['results']['description'], DATA['description'])
+        self.assertFalse(response.data['results']['completed'])
+        self.assertEqual(response.data['results']['owner'], self.user.username)
+        self.assertEqual(len(response.data['results']['tags']), 1)
 
     def test_post_todo_wrong_tag_bad_success(self) -> None:
         data = {
@@ -145,7 +145,7 @@ class TestPostTodoView(BaseCardsTest):
 
         response = self.client.post(self.todos_url, data=data, format='json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(len(response.data['tags']), 0)
+        self.assertEqual(len(response.data['results']['tags']), 0)
 
 
 class TestPutTodoView(BaseCardsTest):
@@ -160,7 +160,7 @@ class TestPutTodoView(BaseCardsTest):
         response = self.client.put(self.todo_detail_url, data=data, format='json')
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(
-            response.data['detail'], 'Authentication credentials were not provided.'
+            response.data['results']['detail'], 'Authentication credentials were not provided.'
         )
 
     def test_put_todos_auth_user_success(self) -> None:
@@ -174,11 +174,11 @@ class TestPutTodoView(BaseCardsTest):
 
         response = self.client.put(self.todo_detail_url, data=data, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['title'], DATA['title'])
-        self.assertEqual(response.data['description'], DATA['description'])
-        self.assertFalse(response.data['completed'])
-        self.assertEqual(response.data['owner'], self.user.username)
-        self.assertEqual(len(response.data['tags']), 1)
+        self.assertEqual(response.data['results']['title'], DATA['title'])
+        self.assertEqual(response.data['results']['description'], DATA['description'])
+        self.assertFalse(response.data['results']['completed'])
+        self.assertEqual(response.data['results']['owner'], self.user.username)
+        self.assertEqual(len(response.data['results']['tags']), 1)
 
 
 class TestPatchTodoView(BaseCardsTest):
@@ -190,7 +190,7 @@ class TestPatchTodoView(BaseCardsTest):
         response = self.client.patch(self.todo_detail_url, data=data, format='json')
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(
-            response.data['detail'], 'Authentication credentials were not provided.'
+            response.data['results']['detail'], 'Authentication credentials were not provided.'
         )
 
     def test_patch_todos_auth_user_success(self) -> None:
@@ -203,11 +203,11 @@ class TestPatchTodoView(BaseCardsTest):
 
         response = self.client.patch(self.todo_detail_url, data=data, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['title'], self.todos[-1].title)
-        self.assertEqual(response.data['description'], self.todos[-1].description)
-        self.assertFalse(response.data['completed'])
-        self.assertEqual(response.data['owner'], self.user.username)
-        self.assertEqual(len(response.data['tags']), 1)
+        self.assertEqual(response.data['results']['title'], self.todos[-1].title)
+        self.assertEqual(response.data['results']['description'], self.todos[-1].description)
+        self.assertFalse(response.data['results']['completed'])
+        self.assertEqual(response.data['results']['owner'], self.user.username)
+        self.assertEqual(len(response.data['results']['tags']), 1)
 
 
 class TestDeleteTodoView(BaseCardsTest):
@@ -216,7 +216,7 @@ class TestDeleteTodoView(BaseCardsTest):
         response = self.client.delete(self.todo_detail_url)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(
-            response.data['detail'], 'Authentication credentials were not provided.'
+            response.data['results']['detail'], 'Authentication credentials were not provided.'
         )
 
     def test_delete_tag_auth_user_success(self) -> None:

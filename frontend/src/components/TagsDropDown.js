@@ -33,7 +33,7 @@ export default class TagsDropDown extends Component {
     getTags = () => {
         axios
             .get("/api/tags/")
-            .then((res) => this.setState({ allTags: res.data }))
+            .then((res) => this.setState({ allTags: res.data.results }))
             .catch((err) => console.log(err));
     };
 
@@ -49,12 +49,12 @@ export default class TagsDropDown extends Component {
         axios
             .get("/api/tags/?title=" + tag.title)
             .then((res) => {
-                if (res.data.length > 0) {
-                    this.updateTags([...this.state.activeItem.tags, ...res.data])
+                if (res.data.results.length > 0) {
+                    this.updateTags([...this.state.activeItem.tags, ...res.data.results])
                 } else {
                     axios
                         .post("/api/tags/", tag)
-                        .then((res) => this.updateTags([...this.state.activeItem.tags, res.data]))
+                        .then((res) => this.updateTags([...this.state.activeItem.tags, res.data.results]))
                         .catch((err) => console.log(err));
                 }
             })

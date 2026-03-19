@@ -82,6 +82,7 @@ MIDDLEWARE = [
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
+    'cards.middleware.NotificationMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware'
 ]
 
@@ -237,7 +238,7 @@ CELERY_ENABLE_UTC = True
 CELERY_BEAT_SCHEDULE = {
     'notify_users': {
         'task': 'cards.tasks.notify_users',
-        'schedule': crontab(minute='*/30')
+        'schedule': crontab(minute='*/60')
     },
     'remove_unused_tags': {
         'task': 'cards.tasks.remove_unused_tags',
